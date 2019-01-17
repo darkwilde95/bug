@@ -1,4 +1,4 @@
-grammar BUG_Tokens;
+grammar bug_tokens;
 
 // Tokens
 ASSIGN  : '=' ;
@@ -6,25 +6,24 @@ PLUS    : '+' ;
 MINUS   : '-' ;
 MULT    : '*' ;
 DIV     : '/' ;
-LP      : '(' ;
-RP      : ')' ;
-// **mod : %
+COMMA   : ',' ;
+SBL      : '[' ;
+SBR      : ']' ;
+PL      : '(' ;
+PR      : ')' ;
 
 AND     : '&&' ;
 OR      : '||' ;
 NOT     : '!' ;
 TRUE    : 'true' ;
 FALSE   : 'false' ;
-INT     : '-'? [0-9]+ ;
-DECIMAL : INT '.' [0-9]+ ;
 
 LT      : '<' ;
 GT      : '>' ;
 LE      : '<=' ;
 GE      : '>=' ;
 EQ      : '==' ;
-DIFF    : '!=' ;
-//**NEG: !
+NEQ     : '!=' ;
 
 IF      : 'if' ;
 ELSE    : 'else' ;
@@ -34,7 +33,12 @@ END     : 'end' ;
 FOR     : 'for' ;
 STEP    : 'step';
 TO      : 'to' ;
-ID      : [A-Za-z][A-Za-z_0-9]* ;
+PRINT   : 'print' ;
+
+ID      : [A-Za-z_][A-Za-z0-9_]* ;
+INT     : [0-9]+ ;
+FLOAT   : INT '.' [0-9]+ ;
+COMMENT : '#' ~[\r\n]* -> skip ;
 
 NEWLINE : '\r'? '\n' ;
 WS      : [ \t]+ -> skip ;

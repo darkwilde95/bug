@@ -1,57 +1,50 @@
-grammar Bug;
-import BUG_Tokens;
+grammar bug;
+import bug_tokens;
 
-prog        :	(instruc NEWLINE)+ ;
+program     : (statement NEWLINE)* EOF ;
 
-instruc     : assignation
+block       : (statement NEWLINE)* ;
+
+statement   : assignation
             | b_if
             | b_while
             | b_for
+            | print
             ;
 
-number      : INT | DECIMAL ;
+expression  : MINUS expression
+            | NOT expression
+            | expression op=(MULT | DIV) expression
+            | expression op=(PLUS | MINUS) expression
+            | expression op=(LE | GE | LT | GT) expression
+            | expression op=(EQ | NEQ) expression
+            | expression AND expression
+            | expression OR expression
+            | type
+            ;
 
-expr        : expr op=('*'|'/') expr
-            | expr op=('+'|'-') expr
-            | number
+type        : PL expression PR
+            | (INT | FLOAT)
+            | (TRUE | FALSE)
             | ID
-            | LP expr RP
             ;
 
-// -----------------------------------------------------------------------------
+print       : PRINT expression ;
 
-assignation : ID ASSIGN number
-            | ID ASSIGN '-'? ID
-            | ID ASSIGN FALSE
-            | ID ASSIGN TRUE
-            | ID ASSIGN expr
-            ;
+assignation : ID ASSIGN expression ;
 
-operand     : ID | INT | DECIMAL ;
-
-bool        : TRUE | FALSE | ID ;
-
-comp        : LT | GT | LE | GE | EQ | DIFF ;
-
-condition   : operand comp operand
-            | bool
-            | condition AND condition
-            | condition OR condition
-            | LP condition RP
-            ;
-
-b_if        : IF condition NEWLINE
-              (instruc NEWLINE)+
-              (ELIF condition NEWLINE instruc NEWLINE)*
-              (ELSE NEWLINE instruc NEWLINE)?
+b_if        : IF expression NEWLINE
+              block
+              (ELIF expression NEWLINE block)*
+              (ELSE NEWLINE block)?
               END
             ;
 
-b_while     : WHILE condition NEWLINE
-              (instruc NEWLINE)+
+b_while     : WHILE expression NEWLINE
+              block
               END;
 
-b_for       : FOR ID ASSIGN expr TO expr STEP expr NEWLINE
-              (instruc NEWLINE)+
+b_for       : FOR assignation TO expression STEP expression NEWLINE
+              block
               END
             ;
