@@ -20,10 +20,10 @@ public class Type {
     this.auxType = -1;
   }
 
-  public Type(int type) {
-    this.type = Type.EXPR;
-    this.val = null;
-    this.auxType = type;
+  public Type(int type, int auxType, String val) {
+    this.type = type;
+    this.val = val;
+    this.auxType = auxType;
   }
 
   public boolean isBoolean() {
@@ -44,7 +44,9 @@ public class Type {
   }
 
   public String asInteger() {
-    String aux = String.format("%02dH", Integer.parseInt(this.val, 16));
+    int n = Integer.parseInt(this.val);
+    String hex = Integer.toHexString(n).toUpperCase();
+    String aux = String.format("%1$2sH",hex).replace(" ", "0");
     return aux;
   }
 

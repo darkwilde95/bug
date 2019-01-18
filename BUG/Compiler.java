@@ -6,6 +6,7 @@
 package bug;
 
 import java.util.HashMap;
+import org.antlr.runtime.tree.ParseTree;
 
 /**
  *
@@ -14,6 +15,8 @@ import java.util.HashMap;
 public class Compiler extends bugBaseVisitor<Type> {
 
   HashMap<String, Type> SymbolsTable = new HashMap();
+  boolean b_used = false;
+  org.antlr.v4.runtime.tree.ParseTree last = null;
 
   @Override
   public Type visitBugFor(bugParser.BugForContext ctx) {
@@ -35,7 +38,9 @@ public class Compiler extends bugBaseVisitor<Type> {
 
     String id = ctx.ID().getText();
     Type id_t = null;
+    last = ctx.expression().getChild(2);
     Type operand = this.visit(ctx.expression());
+    b_used = false;
     
     if (SymbolsTable.containsKey(id)) {
       id_t = SymbolsTable.get(id);
@@ -110,7 +115,12 @@ public class Compiler extends bugBaseVisitor<Type> {
 
   @Override
   public Type visitParentExpr(bugParser.ParentExprContext ctx) {
-    return this.visit(ctx.expression());
+    Type aux = this.visit(ctx.expression());
+    if (!b_used) {
+      System.out.println("LD B,A");
+      b_used = true;
+    } 
+    return aux;
   }
 
   @Override
@@ -180,7 +190,7 @@ public class Compiler extends bugBaseVisitor<Type> {
 
   @Override
   public Type visitTypeExpr(bugParser.TypeExprContext ctx) {
-    return super.visitTypeExpr(ctx); //To change body of generated methods, choose Tools | Templates.
+    return super.visitTypeExpr(ctx);
   }
 
   @Override
@@ -193,7 +203,31 @@ public class Compiler extends bugBaseVisitor<Type> {
     Type left = this.visit(ctx.expression(0));
     Type right = this.visit(ctx.expression(1));
     
-    if (left.type == Type.EXPR || right.type == Type.EXPR) {
+    // EXPR en IZQ y DER
+    if (left.type == Type.EXPR && right.type == Type.EXPR) {
+      if (left.auxType == right.auxType) {
+        if (left.auxType == Type.INT) {
+          if (ctx.op.getType() == bugParser.PLUS) {
+            System.out.println("ADD A,B");
+          } else {
+            System.out.println("LD C,A");
+            System.out.println("LD A,B");
+            System.out.println("SUB C");
+          }
+          if (last != ctx.expression(1)) {
+            System.out.println("LD B,A");
+          }
+          return new Type(Type.EXPR, Type.INT, null);
+        } else {
+          System.err.println("Operation not result in 'int'");
+          System.exit(-1);
+        }
+      } else {
+        System.err.println("Incompatible types!");
+        System.exit(-1);
+      }
+    } else if (left.type == Type.EXPR || right.type == Type.EXPR) {
+      // EXPR en izquierda
       if (left.type == Type.EXPR) {
         if (right.type == Type.ID) {
           if (SymbolsTable.containsKey(right.val)) {
@@ -228,6 +262,8 @@ public class Compiler extends bugBaseVisitor<Type> {
           }
         }
       } else {
+        // EXPR en derecha
+        b_used = false;
         if (left.type == Type.ID) {
           if (SymbolsTable.containsKey(left.val)) {
             if (SymbolsTable.get(left.val).type == right.auxType) {
@@ -235,7 +271,8 @@ public class Compiler extends bugBaseVisitor<Type> {
                 if (ctx.op.getType() == bugParser.PLUS) {
                   System.out.println("ADD A,(" + left.val + ")");
                 } else {
-                  System.out.println("SUB (" + left.val + ")");
+                  System.out.println("LD A,(" + left.val + ")" );
+                  System.out.println("SUB B");
                 }
                 return new Type(Type.EXPR, Type.INT, null);
               } else {
@@ -252,7 +289,8 @@ public class Compiler extends bugBaseVisitor<Type> {
             if (ctx.op.getType() == bugParser.PLUS) {
               System.out.println("ADD A," + left.asInteger());
             } else {
-              System.out.println("SUB " + left.asInteger());
+              System.out.println("LD A," + left.asInteger());
+              System.out.println("SUB B");
             }
             return new Type(Type.EXPR, Type.INT, null);
           } else {
@@ -262,7 +300,7 @@ public class Compiler extends bugBaseVisitor<Type> {
         }
       }
     } else {
-      
+      // HOJAS
       if (left.type == Type.INT && right.type == Type.INT) {
         System.out.println("LD A," + left.asInteger());
         if (ctx.op.getType() == bugParser.PLUS) {
