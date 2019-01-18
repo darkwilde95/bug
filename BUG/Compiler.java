@@ -44,19 +44,19 @@ public class Compiler extends bugBaseVisitor<Type> {
     if (operand.type == Type.EXPR) {
       if (id_t != null && id_t.type != operand.auxType) {
         System.err.println("Incompatible Types!");
-        System.exit(0);
+        System.exit(-1);
       }
       SymbolsTable.put(id, new Type(operand.auxType, operand.val));
     } else if (operand.type == Type.ID) {
         if(!SymbolsTable.containsKey(operand.val)) {
           System.err.println("Variable '" + operand.val + "' was not declared");
-          System.exit(0);
+          System.exit(-1);
         }
         SymbolsTable.put(id, new Type(SymbolsTable.get(operand.val).type, operand.val));
     } else{
       if (id_t != null && id_t.type != operand.type) {
         System.err.println("Incompatible Types!");
-        System.exit(0);
+        System.exit(-1);
       }
       SymbolsTable.put(id, new Type(operand.type, operand.val));
     }
@@ -71,7 +71,7 @@ public class Compiler extends bugBaseVisitor<Type> {
         break;
 
       case Type.BOOL:
-        System.out.println("LD ("+ id + "),"+ operand.val);
+        System.out.println("LD ("+ id + "),"+ operand.asBoolean());
         break;
 
       case Type.EXPR:
@@ -79,16 +79,17 @@ public class Compiler extends bugBaseVisitor<Type> {
         break;
 
       case Type.NONE:
-        System.err.println("Error");
+        System.err.println("Operation not supported");
+        System.exit(-1);
         break;
     }
 
-    return super.visitBugAssignation(ctx);
+    return new Type(Type.NONE, null);
   }
 
   @Override
   public Type visitBugPrint(bugParser.BugPrintContext ctx) {
-    return super.visitBugPrint(ctx); //To change body of generated methods, choose Tools | Templates.
+    return super.visitBugPrint(ctx);
   }
 
   @Override
@@ -109,7 +110,7 @@ public class Compiler extends bugBaseVisitor<Type> {
 
   @Override
   public Type visitParentExpr(bugParser.ParentExprContext ctx) {
-    return super.visitParentExpr(ctx);
+    return this.visit(ctx.expression());
   }
 
   @Override
@@ -192,20 +193,165 @@ public class Compiler extends bugBaseVisitor<Type> {
     Type left = this.visit(ctx.expression(0));
     Type right = this.visit(ctx.expression(1));
     
+    if (left.type == Type.EXPR || right.type == Type.EXPR) {
+      if (left.type == Type.EXPR) {
+        if (right.type == Type.ID) {
+          if (SymbolsTable.containsKey(right.val)) {
+            if (SymbolsTable.get(right.val).type == left.auxType) {
+              if (SymbolsTable.get(right.val).type == Type.INT) {
+                if (ctx.op.getType() == bugParser.PLUS) {
+                  System.out.println("ADD A,(" + right.val + ")");
+                } else {
+                  System.out.println("SUB (" + right.val + ")");
+                }
+                return new Type(Type.EXPR, Type.INT, null);
+              } else {
+                System.err.println("Variables are not 'int' types");
+                System.exit(-1);
+              }
+            } else {
+              System.err.println("Incompatible types!");
+              System.exit(-1);
+            }
+          }
+        } else {
+          if (right.type == Type.INT) {
+            if (ctx.op.getType() == bugParser.PLUS) {
+              System.out.println("ADD A," + right.asInteger());
+            } else {
+              System.out.println("SUB " + right.asInteger());
+            }
+            return new Type(Type.EXPR, Type.INT, null);
+          } else {
+            System.err.println("Incompatible types!");
+            System.exit(-1);
+          }
+        }
+      } else {
+        if (left.type == Type.ID) {
+          if (SymbolsTable.containsKey(left.val)) {
+            if (SymbolsTable.get(left.val).type == right.auxType) {
+              if (SymbolsTable.get(left.val).type == Type.INT) {
+                if (ctx.op.getType() == bugParser.PLUS) {
+                  System.out.println("ADD A,(" + left.val + ")");
+                } else {
+                  System.out.println("SUB (" + left.val + ")");
+                }
+                return new Type(Type.EXPR, Type.INT, null);
+              } else {
+                System.err.println("Variables are not 'int' types");
+                System.exit(-1);
+              }
+            } else {
+              System.err.println("Incompatible types!");
+              System.exit(-1);
+            }
+          }
+        } else {
+          if (left.type == Type.INT) {
+            if (ctx.op.getType() == bugParser.PLUS) {
+              System.out.println("ADD A," + left.asInteger());
+            } else {
+              System.out.println("SUB " + left.asInteger());
+            }
+            return new Type(Type.EXPR, Type.INT, null);
+          } else {
+            System.err.println("Incompatible types!");
+            System.exit(-1);
+          }
+        }
+      }
+    } else {
+      
+      if (left.type == Type.INT && right.type == Type.INT) {
+        System.out.println("LD A," + left.asInteger());
+        if (ctx.op.getType() == bugParser.PLUS) {
+          System.out.println("ADD A," + right.asInteger());
+        } else {
+          System.out.println("SUB " + right.asInteger());
+        }
+        return new Type(Type.EXPR, Type.INT, null);
+        
+        
+      } else if (left.type == Type.INT && right.type == Type.ID) {
+        if (SymbolsTable.containsKey(right.val)) {
+          if (SymbolsTable.get(right.val).type == Type.INT) {
+            System.out.println("LD A," + left.asInteger());
+            if (ctx.op.getType() == bugParser.PLUS) {
+              System.out.println("ADD A,(" + right.val + ")");
+            } else {
+              System.out.println("SUB (" + right.val + ")");
+            }
+            return new Type(Type.EXPR, Type.INT, null);
+          } else {
+            System.err.println("Incompatible types!");
+            System.exit(-1);
+          }
+        } else {
+          System.err.println("Variable '" + right.val + "' was not declared");
+          System.exit(-1);
+        }
+        
+        
+      } else if (left.type == Type.ID && right.type == Type.INT) {
+        if (SymbolsTable.containsKey(left.val)) {
+          if (SymbolsTable.get(left.val).type == Type.INT) {
+            System.out.println("LD A,(" + left.val + ")");
+            if (ctx.op.getType() == bugParser.PLUS) {
+              System.out.println("ADD A," + right.asInteger());
+            } else {
+              System.out.println("SUB " + right.asInteger());
+            }
+            return new Type(Type.EXPR, Type.INT, null);
+          } else {
+            System.err.println("Incompatible types!");
+            System.exit(-1);
+          }
+        } else {
+          System.err.println("Variable '" + left.val + "' was not declared");
+          System.exit(-1);
+        }
+        
+        
+      } else if (left.type == Type.ID && right.type == Type.ID) {
+        if (SymbolsTable.containsKey(left.val)) {
+          if (SymbolsTable.containsKey(right.val)) {
+            if (SymbolsTable.get(left.val).type == SymbolsTable.get(right.val).type) {
+              if (SymbolsTable.get(left.val).type == Type.INT) {
+                System.out.println("LD A,(" + left.val + ")");
+                if (ctx.op.getType() == bugParser.PLUS) {
+                  System.out.println("ADD A,(" + right.val + ")");
+                } else {
+                  System.out.println("SUB (" + right.val + ")");
+                }
+                return new Type(Type.EXPR, Type.INT, null);
+              } else {
+                System.err.println("Variables are not 'int' types");
+                System.exit(-1);
+              }
+            } else {
+              System.err.println("Incompatible types!");
+              System.exit(-1);
+            }
+          } else {
+            System.err.println("Variable '" + right.val + "' was not declared");
+            System.exit(-1);
+          }
+        } else {
+          System.err.println("Variable '" + left.val + "' was not declared");
+          System.exit(-1);
+        }
+      }
+    }
     
     
-    System.out.println("left: " + left.type + ", right: " + right.type);
     
-    return new Type(Type.INT);
-    
-    //System.out.println(left.val + " " + left.type + " " + left.auxType);
-    //System.out.println(right.val + " " + right.type + " " + right.auxType);
-
+    return new Type(Type.NONE, null);
   }
 
   @Override
   public Type visitNotExpr(bugParser.NotExprContext ctx) {
-    return super.visitNotExpr(ctx); //To change body of generated methods, choose Tools | Templates.
+    return super.visitNotExpr(ctx);
   }
 
   @Override
