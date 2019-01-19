@@ -1,3 +1,4 @@
+package bug;
 // Generated from .\bug.g4 by ANTLR 4.7.2
 import org.antlr.v4.runtime.tree.ParseTreeVisitor;
 
@@ -77,6 +78,13 @@ public interface bugVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitMultDivExpr(bugParser.MultDivExprContext ctx);
 	/**
+	 * Visit a parse tree produced by the {@code parentExpr}
+	 * labeled alternative in {@link bugParser#expression}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitParentExpr(bugParser.ParentExprContext ctx);
+	/**
 	 * Visit a parse tree produced by the {@code eqNeqExpr}
 	 * labeled alternative in {@link bugParser#expression}.
 	 * @param ctx the parse tree
@@ -90,13 +98,6 @@ public interface bugVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitAndExpr(bugParser.AndExprContext ctx);
-	/**
-	 * Visit a parse tree produced by the {@code parentExpr}
-	 * labeled alternative in {@link bugParser#type}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitParentExpr(bugParser.ParentExprContext ctx);
 	/**
 	 * Visit a parse tree produced by the {@code numberType}
 	 * labeled alternative in {@link bugParser#type}.

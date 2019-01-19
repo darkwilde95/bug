@@ -12,7 +12,8 @@ statement   : assignation
             | print
             ;
 
-expression  : MINUS expression                                      #negExpr
+expression  : PL expression PR                                      #parentExpr
+            | MINUS expression                                      #negExpr
             | NOT expression                                        #notExpr
             | expression op=(MULT | DIV) expression                 #multDivExpr
             | expression op=(PLUS | MINUS) expression               #addSubExpr
@@ -23,8 +24,7 @@ expression  : MINUS expression                                      #negExpr
             | type                                                  #typeExpr
             ;
 
-type        : PL expression PR                                      #parentExpr
-            | INT                                                   #numberType
+type        : INT                                                   #numberType
             | value=(TRUE | FALSE)                                  #boolType
             | ID                                                    #identifier
             ;
