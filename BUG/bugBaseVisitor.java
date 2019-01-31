@@ -38,28 +38,56 @@ public class bugBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements bu
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitNotExpr(bugParser.NotExprContext ctx) { return visitChildren(ctx); }
+	@Override public T visitExpression(bugParser.ExpressionContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitAddSubExpr(bugParser.AddSubExprContext ctx) { return visitChildren(ctx); }
+	@Override public T visitNotExpr_b(bugParser.NotExpr_bContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitNegExpr(bugParser.NegExprContext ctx) { return visitChildren(ctx); }
+	@Override public T visitEqNeqExpr_a(bugParser.EqNeqExpr_aContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitTypeExpr(bugParser.TypeExprContext ctx) { return visitChildren(ctx); }
+	@Override public T visitBooleanId(bugParser.BooleanIdContext ctx) { return visitChildren(ctx); }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation returns the result of calling
+	 * {@link #visitChildren} on {@code ctx}.</p>
+	 */
+	@Override public T visitEqNeqExpr_b(bugParser.EqNeqExpr_bContext ctx) { return visitChildren(ctx); }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation returns the result of calling
+	 * {@link #visitChildren} on {@code ctx}.</p>
+	 */
+	@Override public T visitBooleanType(bugParser.BooleanTypeContext ctx) { return visitChildren(ctx); }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation returns the result of calling
+	 * {@link #visitChildren} on {@code ctx}.</p>
+	 */
+	@Override public T visitAndExpr_b(bugParser.AndExpr_bContext ctx) { return visitChildren(ctx); }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation returns the result of calling
+	 * {@link #visitChildren} on {@code ctx}.</p>
+	 */
+	@Override public T visitParentExpr_b(bugParser.ParentExpr_bContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
@@ -73,89 +101,82 @@ public class bugBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements bu
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitOrExpr(bugParser.OrExprContext ctx) { return visitChildren(ctx); }
+	@Override public T visitOrExpr_b(bugParser.OrExpr_bContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitMultDivExpr(bugParser.MultDivExprContext ctx) { return visitChildren(ctx); }
+	@Override public T visitIntegerId(bugParser.IntegerIdContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitParentExpr(bugParser.ParentExprContext ctx) { return visitChildren(ctx); }
+	@Override public T visitIntegerType(bugParser.IntegerTypeContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitEqNeqExpr(bugParser.EqNeqExprContext ctx) { return visitChildren(ctx); }
+	@Override public T visitParentExpr_a(bugParser.ParentExpr_aContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitAndExpr(bugParser.AndExprContext ctx) { return visitChildren(ctx); }
+	@Override public T visitNegExpr_a(bugParser.NegExpr_aContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitNumberType(bugParser.NumberTypeContext ctx) { return visitChildren(ctx); }
+	@Override public T visitAddSubExpr_a(bugParser.AddSubExpr_aContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitBoolType(bugParser.BoolTypeContext ctx) { return visitChildren(ctx); }
+	@Override public T visitMultDivExpr_a(bugParser.MultDivExpr_aContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitIdentifier(bugParser.IdentifierContext ctx) { return visitChildren(ctx); }
+	@Override public T visitPrint(bugParser.PrintContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitBugPrint(bugParser.BugPrintContext ctx) { return visitChildren(ctx); }
+	@Override public T visitAssignation(bugParser.AssignationContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitBugAssignation(bugParser.BugAssignationContext ctx) { return visitChildren(ctx); }
+	@Override public T visitB_if(bugParser.B_ifContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitBugIf(bugParser.BugIfContext ctx) { return visitChildren(ctx); }
+	@Override public T visitB_while(bugParser.B_whileContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitBugWhile(bugParser.BugWhileContext ctx) { return visitChildren(ctx); }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation returns the result of calling
-	 * {@link #visitChildren} on {@code ctx}.</p>
-	 */
-	@Override public T visitBugFor(bugParser.BugForContext ctx) { return visitChildren(ctx); }
+	@Override public T visitB_for(bugParser.B_forContext ctx) { return visitChildren(ctx); }
 }

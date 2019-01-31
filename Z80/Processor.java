@@ -74,7 +74,7 @@ public class Processor {
   }
   public void runProgram() throws IOException, InterruptedException {
     int i=0;
-    
+
     while(!this.end) {
       this.fetch();
       this.execute();
@@ -479,23 +479,14 @@ public class Processor {
       case 48:
         System.out.println("comparacion");
         if (ALU.equal(this.reg_8bit[A], this.reg_8bit[this.ir.op2])) {
-          // TODO Banderas
           setFlags(this.carry,false);
           setFlags(this.zero,true);
-          //this.flags[this.carry]=false;
-          //this.flags[this.zero]=true;
-        }else if(ALU.lessThan(this.reg_8bit[A], this.reg_8bit[this.ir.op2])) {
-          // TODO Banderas
+        } else if(ALU.lessThan(this.reg_8bit[A], this.reg_8bit[this.ir.op2])) {
           setFlags(this.carry,true);
           setFlags(this.zero,false);
-          //this.flags[this.carry]=true;
-          //this.flags[this.zero]=false;
         } else {
-          // TODO Banderas
           setFlags(this.carry,false);
-          setFlags(this.zero,true);
-          //this.flags[this.carry]=false;
-          //this.flags[this.zero]=true;
+          setFlags(this.zero,false);
         }
         break;
 
@@ -505,23 +496,14 @@ public class Processor {
         addr = this.reg_8bit[(0x00_00_ff_00 & this.ir.op2) >>> 8] << 8;
         addr |= this.reg_8bit[0x00_00_00_ff & this.ir.op2];
         if (ALU.equal(this.reg_8bit[A], this.mem.get(addr))) {
-          // TODO Banderas
           setFlags(this.carry,false);
           setFlags(this.zero,true);
-          //this.flags[this.carry]=false;
-          //this.flags[this.zero]=true;
         }else if(ALU.lessThan(this.reg_8bit[A], this.mem.get(addr))) {
-          // TODO Banderas
           setFlags(this.carry,true);
           setFlags(this.zero,false);
-          //this.flags[this.carry]=true;
-          //this.flags[this.zero]=false;
         } else {
-          // TODO Banderas
           setFlags(this.carry,false);
-          setFlags(this.zero,true);
-          //this.flags[this.carry]=false;
-          //this.flags[this.zero]=true;
+          setFlags(this.zero,false);
         }
         break;
 
@@ -529,23 +511,14 @@ public class Processor {
       case 50:
         System.out.println("comparacion");
         if (ALU.equal(this.reg_8bit[A], this.mem.get(this.ir.op2))) {
-          // TODO Banderas
           setFlags(this.carry,false);
           setFlags(this.zero,true);
-          //this.flags[this.carry]=false;
-          //this.flags[this.zero]=true;
         }else if(ALU.lessThan(this.reg_8bit[A], this.mem.get(this.ir.op2))) {
-          // TODO Banderas
           setFlags(this.carry,true);
           setFlags(this.zero,false);
-          //this.flags[this.carry]=true;
-          //this.flags[this.zero]=false;
         } else {
-          // TODO Banderas
           setFlags(this.carry,false);
-          setFlags(this.zero,true);
-          //this.flags[this.carry]=false;
-          //this.flags[this.zero]=true;
+          setFlags(this.zero,false);
         }
         break;
 
@@ -553,23 +526,14 @@ public class Processor {
       case 51:
         System.out.println("comparacion");
         if (ALU.equal(this.reg_8bit[A], this.ir.op2)) {
-          // TODO Banderas
           setFlags(this.carry,false);
           setFlags(this.zero,true);
-          //this.flags[this.carry]=false;
-          //this.flags[this.zero]=true;
         }else if(ALU.lessThan(this.reg_8bit[A], this.ir.op2)) {
-          // TODO Banderas
           setFlags(this.carry,true);
           setFlags(this.zero,false);
-          //this.flags[this.carry]=true;
-          //this.flags[this.zero]=false;
         } else {
-          // TODO Banderas
           setFlags(this.carry,false);
-          setFlags(this.zero,true);
-          //this.flags[this.carry]=false;
-          //this.flags[this.zero]=true;
+          setFlags(this.zero,false);
         }
         break;
 
@@ -625,14 +589,12 @@ public class Processor {
 
       // TODO: BIT SET RESET
 
-      // jump C, mem ind (acc > 0)
+      // jump C, mem ind
       case 69:
-        System.out.println("jump pos");
-        if (this.reg_8bit[A] > 0){
-          // Avanzar PC
+        System.out.println("jump c");
+        if (this.flags[this.carry]) {
           addr = this.reg_8bit[this.ir.op1] << 8;
           addr |= this.reg_8bit[this.ir.op2];
-//          this.reg_16bit[PC] = addr;
           this.setReg_16bit(PC, addr);
         }
         break;
@@ -640,31 +602,25 @@ public class Processor {
       // jump pos(is a memory address)
       case 70:
         System.out.println("jump pos");
-        if (this.reg_8bit[A] > 0){
-          // Avanzar PC
-//          this.reg_16bit[PC] = this.ir.op2;
+        if (this.flags[this.carry]) {
           this.setReg_16bit(PC, this.ir.op2);
         }
         break;
 
       // jump zero
       case 71:
-        System.out.println("jump zero");
-        if (this.reg_8bit[A] == 0){
-          // Avanzar PC
+        System.out.println("jump z");
+        if (this.flags[this.zero]) {
           addr = this.reg_8bit[this.ir.op1] << 8;
           addr |= this.reg_8bit[this.ir.op2];
-//          this.reg_16bit[PC] = addr;
           this.setReg_16bit(PC, addr);
         }
         break;
 
       // jump zero(is a memory address)
       case 72:
-        System.out.println("jump zero");
-        if (this.reg_8bit[A] == 0){
-          // Avanzar PC
-//          this.reg_16bit[PC] = this.ir.op2;
+        System.out.println("jump z");
+        if (this.flags[this.zero]){
           this.setReg_16bit(PC, this.ir.op2);
         }
         break;
@@ -675,14 +631,11 @@ public class Processor {
         addr = this.reg_8bit[this.ir.op1] << 8;
         addr |= this.reg_8bit[this.ir.op2];
         this.setReg_16bit(PC, addr);
-//        this.reg_16bit[PC] = addr;
         break;
 
       // jump label
       case 74:
-        // Avanzar PC
         this.setReg_16bit(PC, this.ir.op2);
-//        this.reg_16bit[PC] = this.ir.op2;
         break;
 
       case 75:

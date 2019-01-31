@@ -13,6 +13,12 @@ public class Type {
   public int auxType;
   public String val;
   public static final Type noneObject = new Type(Type.NONE, "none");
+  
+  public Type(int type) {
+    this.auxType = -1;
+    this.val = null;
+    this.type = type;
+  }
 
   public Type(int type, String val) {
     this.type = type;

@@ -29,129 +29,144 @@ public interface bugVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitStatement(bugParser.StatementContext ctx);
 	/**
-	 * Visit a parse tree produced by the {@code notExpr}
-	 * labeled alternative in {@link bugParser#expression}.
+	 * Visit a parse tree produced by {@link bugParser#expression}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitNotExpr(bugParser.NotExprContext ctx);
+	T visitExpression(bugParser.ExpressionContext ctx);
 	/**
-	 * Visit a parse tree produced by the {@code addSubExpr}
-	 * labeled alternative in {@link bugParser#expression}.
+	 * Visit a parse tree produced by the {@code notExpr_b}
+	 * labeled alternative in {@link bugParser#expression_b}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitAddSubExpr(bugParser.AddSubExprContext ctx);
+	T visitNotExpr_b(bugParser.NotExpr_bContext ctx);
 	/**
-	 * Visit a parse tree produced by the {@code negExpr}
-	 * labeled alternative in {@link bugParser#expression}.
+	 * Visit a parse tree produced by the {@code eqNeqExpr_a}
+	 * labeled alternative in {@link bugParser#expression_b}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitNegExpr(bugParser.NegExprContext ctx);
+	T visitEqNeqExpr_a(bugParser.EqNeqExpr_aContext ctx);
 	/**
-	 * Visit a parse tree produced by the {@code typeExpr}
-	 * labeled alternative in {@link bugParser#expression}.
+	 * Visit a parse tree produced by the {@code booleanId}
+	 * labeled alternative in {@link bugParser#expression_b}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitTypeExpr(bugParser.TypeExprContext ctx);
+	T visitBooleanId(bugParser.BooleanIdContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code eqNeqExpr_b}
+	 * labeled alternative in {@link bugParser#expression_b}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitEqNeqExpr_b(bugParser.EqNeqExpr_bContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code booleanType}
+	 * labeled alternative in {@link bugParser#expression_b}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitBooleanType(bugParser.BooleanTypeContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code andExpr_b}
+	 * labeled alternative in {@link bugParser#expression_b}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitAndExpr_b(bugParser.AndExpr_bContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code parentExpr_b}
+	 * labeled alternative in {@link bugParser#expression_b}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitParentExpr_b(bugParser.ParentExpr_bContext ctx);
 	/**
 	 * Visit a parse tree produced by the {@code compExpr}
-	 * labeled alternative in {@link bugParser#expression}.
+	 * labeled alternative in {@link bugParser#expression_b}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	T visitCompExpr(bugParser.CompExprContext ctx);
 	/**
-	 * Visit a parse tree produced by the {@code orExpr}
-	 * labeled alternative in {@link bugParser#expression}.
+	 * Visit a parse tree produced by the {@code orExpr_b}
+	 * labeled alternative in {@link bugParser#expression_b}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitOrExpr(bugParser.OrExprContext ctx);
+	T visitOrExpr_b(bugParser.OrExpr_bContext ctx);
 	/**
-	 * Visit a parse tree produced by the {@code multDivExpr}
-	 * labeled alternative in {@link bugParser#expression}.
+	 * Visit a parse tree produced by the {@code integerId}
+	 * labeled alternative in {@link bugParser#expression_a}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitMultDivExpr(bugParser.MultDivExprContext ctx);
+	T visitIntegerId(bugParser.IntegerIdContext ctx);
 	/**
-	 * Visit a parse tree produced by the {@code parentExpr}
-	 * labeled alternative in {@link bugParser#expression}.
+	 * Visit a parse tree produced by the {@code integerType}
+	 * labeled alternative in {@link bugParser#expression_a}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitParentExpr(bugParser.ParentExprContext ctx);
+	T visitIntegerType(bugParser.IntegerTypeContext ctx);
 	/**
-	 * Visit a parse tree produced by the {@code eqNeqExpr}
-	 * labeled alternative in {@link bugParser#expression}.
+	 * Visit a parse tree produced by the {@code parentExpr_a}
+	 * labeled alternative in {@link bugParser#expression_a}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitEqNeqExpr(bugParser.EqNeqExprContext ctx);
+	T visitParentExpr_a(bugParser.ParentExpr_aContext ctx);
 	/**
-	 * Visit a parse tree produced by the {@code andExpr}
-	 * labeled alternative in {@link bugParser#expression}.
+	 * Visit a parse tree produced by the {@code negExpr_a}
+	 * labeled alternative in {@link bugParser#expression_a}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitAndExpr(bugParser.AndExprContext ctx);
+	T visitNegExpr_a(bugParser.NegExpr_aContext ctx);
 	/**
-	 * Visit a parse tree produced by the {@code numberType}
-	 * labeled alternative in {@link bugParser#type}.
+	 * Visit a parse tree produced by the {@code addSubExpr_a}
+	 * labeled alternative in {@link bugParser#expression_a}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitNumberType(bugParser.NumberTypeContext ctx);
+	T visitAddSubExpr_a(bugParser.AddSubExpr_aContext ctx);
 	/**
-	 * Visit a parse tree produced by the {@code boolType}
-	 * labeled alternative in {@link bugParser#type}.
+	 * Visit a parse tree produced by the {@code multDivExpr_a}
+	 * labeled alternative in {@link bugParser#expression_a}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitBoolType(bugParser.BoolTypeContext ctx);
+	T visitMultDivExpr_a(bugParser.MultDivExpr_aContext ctx);
 	/**
-	 * Visit a parse tree produced by the {@code identifier}
-	 * labeled alternative in {@link bugParser#type}.
+	 * Visit a parse tree produced by {@link bugParser#print}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitIdentifier(bugParser.IdentifierContext ctx);
+	T visitPrint(bugParser.PrintContext ctx);
 	/**
-	 * Visit a parse tree produced by the {@code bugPrint}
-	 * labeled alternative in {@link bugParser#print}.
+	 * Visit a parse tree produced by {@link bugParser#assignation}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitBugPrint(bugParser.BugPrintContext ctx);
+	T visitAssignation(bugParser.AssignationContext ctx);
 	/**
-	 * Visit a parse tree produced by the {@code bugAssignation}
-	 * labeled alternative in {@link bugParser#assignation}.
+	 * Visit a parse tree produced by {@link bugParser#b_if}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitBugAssignation(bugParser.BugAssignationContext ctx);
+	T visitB_if(bugParser.B_ifContext ctx);
 	/**
-	 * Visit a parse tree produced by the {@code bugIf}
-	 * labeled alternative in {@link bugParser#b_if}.
+	 * Visit a parse tree produced by {@link bugParser#b_while}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitBugIf(bugParser.BugIfContext ctx);
+	T visitB_while(bugParser.B_whileContext ctx);
 	/**
-	 * Visit a parse tree produced by the {@code bugWhile}
-	 * labeled alternative in {@link bugParser#b_while}.
+	 * Visit a parse tree produced by {@link bugParser#b_for}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitBugWhile(bugParser.BugWhileContext ctx);
-	/**
-	 * Visit a parse tree produced by the {@code bugFor}
-	 * labeled alternative in {@link bugParser#b_for}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitBugFor(bugParser.BugForContext ctx);
+	T visitB_for(bugParser.B_forContext ctx);
 }
