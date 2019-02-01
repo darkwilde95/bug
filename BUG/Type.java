@@ -31,6 +31,12 @@ public class Type {
     this.val = val;
     this.auxType = auxType;
   }
+  
+    public Type(int type, int auxType) {
+    this.type = type;
+    this.val = null;
+    this.auxType = auxType;
+  }
 
   public boolean isBoolean() {
     return this.type == Type.BOOL;

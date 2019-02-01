@@ -456,14 +456,14 @@ public class Compiler extends bugBaseVisitor<Type>{
     if (op.type == Type.BOOL) {
       Errors.isNot(Type.INT);
     } else if (op.type == Type.INT) {
-      System.out.println("LD A," + op.asInteger());
-      System.out.println("NEG");
+      print("LD A," + op.asInteger());
+      print("NEG");
       return new Type(Type.EXPR, Type.INT, null);
     } else if (op.type == Type.ID) {
       if (SymbolsTable.containsKey(op.val)) {
         if (SymbolsTable.get(op.val).type == Type.INT) {
-          System.out.println("LD A,(" + op.val + ")");
-          System.out.println("NEG");
+          print("LD A,(" + op.val + ")");
+          print("NEG");
           return new Type(Type.EXPR, Type.INT, null);
         } else {
           Errors.isNot(Type.INT);
@@ -473,7 +473,7 @@ public class Compiler extends bugBaseVisitor<Type>{
       }
     } else if (op.type == Type.EXPR) {
       if (op.auxType == Type.INT) {
-        System.out.println("NEG");
+        print("NEG");
         return new Type(Type.EXPR, Type.INT, null);
       } else {
         Errors.isNot(Type.INT);
@@ -496,264 +496,619 @@ public class Compiler extends bugBaseVisitor<Type>{
   public Type visitCompExpr(bugParser.CompExprContext ctx) {
     int op = ctx.op.getType();
     int jp1 = 0, jp2 = 0;
+    String id = null, op_l = null, op_r = null;
     Type left = null, right = null;
     left = this.visit(ctx.expression_a(0));
+    if (left.type == Type.EXPR && ctx.getChild(2).getChildCount() > 1) {
+      id = Integer.toString(used.size());
+      used.add(id);
+      this.ensure(id);
+      print("LD (" + id + "),A");
+    }
+    
     right = this.visit(ctx.expression_a(1));
-
-    if (left.type == Type.INT && right.type == Type.INT) {
-      System.out.println("LD A," + left.asInteger());
-      switch(op) {
-        case bugParser.GT:
-          jp1 = jp_num++;
-          jp2 = jp_num++;
-          System.out.println("CP " + right.asInteger());
-          System.out.println("JP C,JUMP_" + jp1); //1 -> 5
-          System.out.println("JP Z,JUMP_" + jp1);  //2 -> 5
-          System.out.println("LD A,01H");  // 3
-          System.out.println("JP JUMP_" + jp2);  // 4 -> 6
-          System.out.println("JUMP_" + jp1 + " LD A,00H");  //5
-          System.out.println("JUMP_" + jp2 + " ADD A,00H");
-          break;
-
-        case bugParser.LT:
-          jp1 = jp_num++;
-          jp2 = jp_num++;
-          System.out.println("CP " + right.asInteger());
-          System.out.println("JP C,JUMP_" + jp1); //1 -> 4
-          System.out.println("LD A,00H");  // 2
-          System.out.println("JP JUMP_" + jp2);  // 3 -> 5
-          System.out.println("JUMP_" + jp1 + " LD A,01H");  // 4
-          System.out.println("JUMP_" + jp2 + " ADD A,00H"); // 5
-          break;
-
-        case bugParser.GE:
-          jp1 = jp_num++;
-          jp2 = jp_num++;
-          System.out.println("LD B," + right.asInteger());
-          System.out.println("DEC B");
-          System.out.println("CP B");
-          System.out.println("JP C,JUMP_" + jp1); //1 -> 5
-          System.out.println("JP Z,JUMP_" + jp1);  //2 -> 5
-          System.out.println("LD A,01H");  // 3
-          System.out.println("JP JUMP_" + jp2);  // 4 -> 6
-          System.out.println("JUMP_" + jp1 + " LD A,00H");  //5
-          System.out.println("JUMP_" + jp2 + " ADD A,00H");
-          break;
-
-        case bugParser.LE:
-          jp1 = jp_num++;
-          jp2 = jp_num++;
-          System.out.println("LD B," + right.asInteger());
-          System.out.println("INC B");
-          System.out.println("CP B");
-          System.out.println("JP C,JUMP_" + jp1);
-          System.out.println("LD A,00H");
-          System.out.println("JP JUMP_" + jp2);
-          System.out.println("JUMP_" + jp1 + " LD A,01H");
-          System.out.println("JUMP_" + jp2 + " ADD A,00H");
-          break;
-      }
-      return new Type(Type.EXPR, Type.BOOL, null);
-
-    } else if (left.type == Type.INT && right.type == Type.ID) {
-      if (SymbolsTable.containsKey(right.val)) {
-        if (SymbolsTable.get(right.val).type == Type.INT) {
-          System.out.println("LD A," + left.asInteger());
+    if (right.type == Type.EXPR && (op == bugParser.GT || op == bugParser.LT)) {
+      id = Integer.toString(used.size());
+      used.add(id);
+      this.ensure(id);
+      print("LD (" + id + "),A");
+    }
+    
+    // EXPR en IZQ y DER
+    if (left.type == Type.EXPR && right.type == Type.EXPR) {
+      if (left.auxType == right.auxType) {
+        if (left.auxType == Type.INT) {
           switch(op) {
             case bugParser.GT:
+              op_r = used.pop();
+              op_l = used.pop();
               jp1 = jp_num++;
               jp2 = jp_num++;
-              System.out.println("CP (" + right.val + ")");
-              System.out.println("JP C,JUMP_" + jp1); //1 -> 5
-              System.out.println("JP Z,JUMP_" + jp1);  //2 -> 5
-              System.out.println("LD A,01H");  // 3
-              System.out.println("JP JUMP_" + jp2);  // 4 -> 6
-              System.out.println("JUMP_" + jp1 + " LD A,00H");  //5
-              System.out.println("JUMP_" + jp2 + " ADD A,00H");
+              print("LD A,(" + op_l + ")");
+              print("CP (" + op_r + ")");
+              print("JP C,JUMP_" + jp1); //1 -> 5
+              print("JP Z,JUMP_" + jp1);  //2 -> 5
+              print("LD A,01H");  // 3
+              print("JP JUMP_" + jp2);  // 4 -> 6
+              print("JUMP_" + jp1 + " LD A,00H");  //5
+              print("JUMP_" + jp2 + " ADD A,00H");
               break;
 
             case bugParser.LT:
+              op_r = used.pop();
+              op_l = used.pop();
               jp1 = jp_num++;
               jp2 = jp_num++;
-              System.out.println("CP (" + right.val + ")");
-              System.out.println("JP C,JUMP_" + jp1); //1 -> 4
-              System.out.println("LD A,00H");  // 2
-              System.out.println("JP JUMP_" + jp2);  // 3 -> 5
-              System.out.println("JUMP_" + jp1 + " LD A,01H");  // 4
-              System.out.println("JUMP_" + jp2 + " ADD A,00H"); // 5
+              print("LD A,(" + op_l + ")");
+              print("CP (" + op_r + ")");
+              print("JP C,JUMP_" + jp1); //1 -> 4
+              print("LD A,00H");  // 2
+              print("JP JUMP_" + jp2);  // 3 -> 5
+              print("JUMP_" + jp1 + " LD A,01H");  // 4
+              print("JUMP_" + jp2 + " ADD A,00H"); // 5
               break;
 
             case bugParser.GE:
               jp1 = jp_num++;
               jp2 = jp_num++;
-              System.out.println("LD B,(" + right.val + ")");
-              System.out.println("DEC B");
-              System.out.println("CP B");
-              System.out.println("JP C,JUMP_" + jp1); //1 -> 5
-              System.out.println("JP Z,JUMP_" + jp1);  //2 -> 5
-              System.out.println("LD A,01H");  // 3
-              System.out.println("JP JUMP_" + jp2);  // 4 -> 6
-              System.out.println("JUMP_" + jp1 + " LD A,00H");  //5
-              System.out.println("JUMP_" + jp2 + " ADD A,00H");
+              op_l = used.pop();
+              print("LD B,A");
+              print("DEC B");
+              print("LD A,(" + op_l + ")");
+              print("CP B");
+              print("JP C,JUMP_" + jp1); //1 -> 5
+              print("JP Z,JUMP_" + jp1);  //2 -> 5
+              print("LD A,01H");  // 3
+              print("JP JUMP_" + jp2);  // 4 -> 6
+              print("JUMP_" + jp1 + " LD A,00H");  //5
+              print("JUMP_" + jp2 + " ADD A,00H");
               break;
 
             case bugParser.LE:
               jp1 = jp_num++;
               jp2 = jp_num++;
-              System.out.println("LD B,(" + right.val + ")");
-              System.out.println("INC B");
-              System.out.println("CP B");
-              System.out.println("JP C,JUMP_" + jp1);
-              System.out.println("LD A,00H");
-              System.out.println("JP JUMP_" + jp2);
-              System.out.println("JUMP_" + jp1 + " LD A,01H");
-              System.out.println("JUMP_" + jp2 + " ADD A,00H");
+              op_l = used.pop();
+              print("LD B,A");
+              print("INC B");
+              print("LD A,(" + op_l + ")");
+              print("CP B");
+              print("JP C,JUMP_" + jp1);
+              print("LD A,00H");
+              print("JP JUMP_" + jp2);
+              print("JUMP_" + jp1 + " LD A,01H");
+              print("JUMP_" + jp2 + " ADD A,00H");
               break;
           }
-
-          return new Type(Type.BOOL, null);
+          
+          return new Type(Type.EXPR, Type.BOOL);
         } else {
-          Errors.incompatibleTypes(left.type, SymbolsTable.get(right.val).type, ctx.op.getText());
+          Errors.operationNotSupported(left.auxType, right.auxType, ctx.op.getText());
         }
       } else {
-        Errors.notDeclared(right.val);
+        Errors.incompatibleTypes(left.auxType, right.auxType, ctx.op.getText());
       }
+    } else if (left.type == Type.EXPR || right.type == Type.EXPR) {
 
-    } else if (left.type == Type.ID && right.type == Type.INT) {
-      if (SymbolsTable.containsKey(left.val)) {
-        if (SymbolsTable.get(left.val).type == Type.INT) {
-          System.out.println("LD A,(" + left.val + ")");
-          switch(op) {
-            case bugParser.GT:
-              jp1 = jp_num++;
-              jp2 = jp_num++;
-              System.out.println("CP " + right.asInteger());
-              System.out.println("JP C,JUMP_" + jp1); //1 -> 5
-              System.out.println("JP Z,JUMP_" + jp1);  //2 -> 5
-              System.out.println("LD A,01H");  // 3
-              System.out.println("JP JUMP_" + jp2);  // 4 -> 6
-              System.out.println("JUMP_" + jp1 + " LD A,00H");  //5
-              System.out.println("JUMP_" + jp2 + " ADD A,00H");
-              break;
+    // EXPR en izquierda
+      if (left.type == Type.EXPR) {
+        if (right.type == Type.ID) {
+          if (SymbolsTable.containsKey(right.val)) {
+            if (SymbolsTable.get(right.val).type == left.auxType) {
+              if (SymbolsTable.get(right.val).type == Type.INT) {
+                switch(op) {
+                  case bugParser.GT:
+                    jp1 = jp_num++;
+                    jp2 = jp_num++;
+                    print("CP (" + right.val + ")");
+                    print("JP C,JUMP_" + jp1); //1 -> 5
+                    print("JP Z,JUMP_" + jp1);  //2 -> 5
+                    print("LD A,01H");  // 3
+                    print("JP JUMP_" + jp2);  // 4 -> 6
+                    print("JUMP_" + jp1 + " LD A,00H");  //5
+                    print("JUMP_" + jp2 + " ADD A,00H");
+                    break;
 
-            case bugParser.LT:
-              jp1 = jp_num++;
-              jp2 = jp_num++;
-              System.out.println("CP " + right.asInteger());
-              System.out.println("JP C,JUMP_" + jp1); //1 -> 4
-              System.out.println("LD A,00H");  // 2
-              System.out.println("JP JUMP_" + jp2);  // 3 -> 5
-              System.out.println("JUMP_" + jp1 + " LD A,01H");  // 4
-              System.out.println("JUMP_" + jp2 + " ADD A,00H"); // 5
-              break;
+                  case bugParser.LT:
+                    jp1 = jp_num++;
+                    jp2 = jp_num++;
+                    print("CP (" + right.val + ")");
+                    print("JP C,JUMP_" + jp1); //1 -> 4
+                    print("LD A,00H");  // 2
+                    print("JP JUMP_" + jp2);  // 3 -> 5
+                    print("JUMP_" + jp1 + " LD A,01H");  // 4
+                    print("JUMP_" + jp2 + " ADD A,00H"); // 5
+                    break;
 
-            case bugParser.GE:
-              jp1 = jp_num++;
-              jp2 = jp_num++;
-              System.out.println("LD B," + right.asInteger());
-              System.out.println("DEC B");
-              System.out.println("CP B");
-              System.out.println("JP C,JUMP_" + jp1); //1 -> 5
-              System.out.println("JP Z,JUMP_" + jp1);  //2 -> 5
-              System.out.println("LD A,01H");  // 3
-              System.out.println("JP JUMP_" + jp2);  // 4 -> 6
-              System.out.println("JUMP_" + jp1 + " LD A,00H");  //5
-              System.out.println("JUMP_" + jp2 + " ADD A,00H");
-              break;
+                  case bugParser.GE:
+                    jp1 = jp_num++;
+                    jp2 = jp_num++;
+                    print("LD B,(" + right.val + ")");
+                    print("DEC B");
+                    print("CP B");
+                    print("JP C,JUMP_" + jp1); //1 -> 5
+                    print("JP Z,JUMP_" + jp1);  //2 -> 5
+                    print("LD A,01H");  // 3
+                    print("JP JUMP_" + jp2);  // 4 -> 6
+                    print("JUMP_" + jp1 + " LD A,00H");  //5
+                    print("JUMP_" + jp2 + " ADD A,00H");
+                    break;
 
-            case bugParser.LE:
-              jp1 = jp_num++;
-              jp2 = jp_num++;
-              System.out.println("LD B," + right.asInteger());
-              System.out.println("INC B");
-              System.out.println("CP B");
-              System.out.println("JP C,JUMP_" + jp1);
-              System.out.println("LD A,00H");
-              System.out.println("JP JUMP_" + jp2);
-              System.out.println("JUMP_" + jp1 + " LD A,01H");
-              System.out.println("JUMP_" + jp2 + " ADD A,00H");
-              break;
-          }
-
-          return new Type(Type.BOOL, null);
-        } else {
-          Errors.incompatibleTypes(SymbolsTable.get(left.val).type, right.type, ctx.op.getText());
-        }
-      } else {
-        Errors.notDeclared(left.val);
-      }
-
-
-    } else if (left.type == Type.ID && right.type == Type.ID) {
-      if (SymbolsTable.containsKey(left.val)) {
-        if (SymbolsTable.containsKey(right.val)) {
-          if (SymbolsTable.get(left.val).type == SymbolsTable.get(right.val).type) {
-            if (SymbolsTable.get(left.val).type == Type.INT) {
-              System.out.println("LD A,(" + left.val + ")");
-              switch(op) {
-                case bugParser.GT:
-                  jp1 = jp_num++;
-                  jp2 = jp_num++;
-                  System.out.println("CP (" + right.val + ")");
-                  System.out.println("JP C,JUMP_" + jp1); //1 -> 5
-                  System.out.println("JP Z,JUMP_" + jp1);  //2 -> 5
-                  System.out.println("LD A,01H");  // 3
-                  System.out.println("JP JUMP_" + jp2);  // 4 -> 6
-                  System.out.println("JUMP_" + jp1 + " LD A,00H");  //5
-                  System.out.println("JUMP_" + jp2 + " ADD A,00H");
-                  break;
-
-                case bugParser.LT:
-                  jp1 = jp_num++;
-                  jp2 = jp_num++;
-                  System.out.println("CP (" + right.val + ")");
-                  System.out.println("JP C,JUMP_" + jp1); //1 -> 4
-                  System.out.println("LD A,00H");  // 2
-                  System.out.println("JP JUMP_" + jp2);  // 3 -> 5
-                  System.out.println("JUMP_" + jp1 + " LD A,01H");  // 4
-                  System.out.println("JUMP_" + jp2 + " ADD A,00H"); // 5
-                  break;
-
-                case bugParser.GE:
-                  jp1 = jp_num++;
-                  jp2 = jp_num++;
-                  System.out.println("LD B,(" + right.val + ")");
-                  System.out.println("DEC B");
-                  System.out.println("CP B");
-                  System.out.println("JP C,JUMP_" + jp1); //1 -> 5
-                  System.out.println("JP Z,JUMP_" + jp1);  //2 -> 5
-                  System.out.println("LD A,01H");  // 3
-                  System.out.println("JP JUMP_" + jp2);  // 4 -> 6
-                  System.out.println("JUMP_" + jp1 + " LD A,00H");  //5
-                  System.out.println("JUMP_" + jp2 + " ADD A,00H");
-                  break;
-
-                case bugParser.LE:
-                  jp1 = jp_num++;
-                  jp2 = jp_num++;
-                  System.out.println("LD B,(" + right.val + ")");
-                  System.out.println("INC B");
-                  System.out.println("CP B");
-                  System.out.println("JP C,JUMP_" + jp1);
-                  System.out.println("LD A,00H");
-                  System.out.println("JP JUMP_" + jp2);
-                  System.out.println("JUMP_" + jp1 + " LD A,01H");
-                  System.out.println("JUMP_" + jp2 + " ADD A,00H");
-                  break;
+                  case bugParser.LE:
+                    jp1 = jp_num++;
+                    jp2 = jp_num++;
+                    print("LD B,(" + right.val + ")");
+                    print("INC B");
+                    print("CP B");
+                    print("JP C,JUMP_" + jp1);
+                    print("LD A,00H");
+                    print("JP JUMP_" + jp2);
+                    print("JUMP_" + jp1 + " LD A,01H");
+                    print("JUMP_" + jp2 + " ADD A,00H");
+                    break;
+                }
+                
+                return new Type(Type.EXPR, Type.BOOL);
+              } else {
+                Errors.areNot(Type.INT);
               }
-
-              return new Type(Type.BOOL, null);
             } else {
-              Errors.areNot(Type.INT);
+              Errors.incompatibleTypes(left.auxType, SymbolsTable.get(right.val).type, ctx.op.getText());
             }
+          }
+        } else {
+          if (right.type == Type.INT) {
+            switch(op) {
+              case bugParser.GT:
+                jp1 = jp_num++;
+                jp2 = jp_num++;
+                print("CP " + right.asInteger());
+                print("JP C,JUMP_" + jp1); //1 -> 5
+                print("JP Z,JUMP_" + jp1);  //2 -> 5
+                print("LD A,01H");  // 3
+                print("JP JUMP_" + jp2);  // 4 -> 6
+                print("JUMP_" + jp1 + " LD A,00H");  //5
+                print("JUMP_" + jp2 + " ADD A,00H");
+                break;
+
+              case bugParser.LT:
+                jp1 = jp_num++;
+                jp2 = jp_num++;
+                print("CP " + right.asInteger());
+                print("JP C,JUMP_" + jp1); //1 -> 4
+                print("LD A,00H");  // 2
+                print("JP JUMP_" + jp2);  // 3 -> 5
+                print("JUMP_" + jp1 + " LD A,01H");  // 4
+                print("JUMP_" + jp2 + " ADD A,00H"); // 5
+                break;
+
+              case bugParser.GE:
+                jp1 = jp_num++;
+                jp2 = jp_num++;
+                print("LD B," + right.asInteger());
+                print("DEC B");
+                print("CP B");
+                print("JP C,JUMP_" + jp1); //1 -> 5
+                print("JP Z,JUMP_" + jp1);  //2 -> 5
+                print("LD A,01H");  // 3
+                print("JP JUMP_" + jp2);  // 4 -> 6
+                print("JUMP_" + jp1 + " LD A,00H");  //5
+                print("JUMP_" + jp2 + " ADD A,00H");
+                break;
+
+              case bugParser.LE:
+                jp1 = jp_num++;
+                jp2 = jp_num++;
+                print("LD B," + right.asInteger());
+                print("INC B");
+                print("CP B");
+                print("JP C,JUMP_" + jp1);
+                print("LD A,00H");
+                print("JP JUMP_" + jp2);
+                print("JUMP_" + jp1 + " LD A,01H");
+                print("JUMP_" + jp2 + " ADD A,00H");
+                break;
+            }
+            
+            return new Type(Type.EXPR, Type.BOOL);
           } else {
-            Errors.incompatibleTypes(SymbolsTable.get(left.val).type, SymbolsTable.get(right.val).type, ctx.op.getText());
+            Errors.incompatibleTypes(left.auxType, right.type, ctx.op.getText());
+          }
+        }
+      } else {
+
+      // EXPR en derecha
+        if (left.type == Type.ID) {
+          if (SymbolsTable.containsKey(left.val)) {
+            if (SymbolsTable.get(left.val).type == right.auxType) {
+              if (SymbolsTable.get(left.val).type == Type.INT) {
+                switch(op) {
+                  case bugParser.GT:
+                    op_r = used.pop();
+                    jp1 = jp_num++;
+                    jp2 = jp_num++;
+                    print("LD A,(" + left.val + ")");
+                    print("CP (" + op_r + ")");
+                    print("JP C,JUMP_" + jp1); //1 -> 5
+                    print("JP Z,JUMP_" + jp1);  //2 -> 5
+                    print("LD A,01H");  // 3
+                    print("JP JUMP_" + jp2);  // 4 -> 6
+                    print("JUMP_" + jp1 + " LD A,00H");  //5
+                    print("JUMP_" + jp2 + " ADD A,00H");
+                    break;
+
+                  case bugParser.LT:
+                    op_r = used.pop();
+                    jp1 = jp_num++;
+                    jp2 = jp_num++;
+                    print("LD A,(" + left.val + ")");
+                    print("CP (" + op_r + ")");
+                    print("JP C,JUMP_" + jp1); //1 -> 4
+                    print("LD A,00H");  // 2
+                    print("JP JUMP_" + jp2);  // 3 -> 5
+                    print("JUMP_" + jp1 + " LD A,01H");  // 4
+                    print("JUMP_" + jp2 + " ADD A,00H"); // 5
+                    break;
+
+                  case bugParser.GE:
+                    jp1 = jp_num++;
+                    jp2 = jp_num++;
+                    print("LD B,A");
+                    print("DEC B");
+                    print("LD A,(" + left.val + ")");
+                    print("CP B");
+                    print("JP C,JUMP_" + jp1); //1 -> 5
+                    print("JP Z,JUMP_" + jp1);  //2 -> 5
+                    print("LD A,01H");  // 3
+                    print("JP JUMP_" + jp2);  // 4 -> 6
+                    print("JUMP_" + jp1 + " LD A,00H");  //5
+                    print("JUMP_" + jp2 + " ADD A,00H");
+                    break;
+
+                  case bugParser.LE:
+                    jp1 = jp_num++;
+                    jp2 = jp_num++;
+                    print("LD B,A");
+                    print("INC B");
+                    print("LD A,(" + left.val + ")");
+                    print("CP B");
+                    print("JP C,JUMP_" + jp1);
+                    print("LD A,00H");
+                    print("JP JUMP_" + jp2);
+                    print("JUMP_" + jp1 + " LD A,01H");
+                    print("JUMP_" + jp2 + " ADD A,00H");
+                    break;
+                }
+                
+                return new Type(Type.EXPR, Type.BOOL);
+              } else {
+                Errors.areNot(Type.INT);
+              }
+            } else {
+              Errors.incompatibleTypes(SymbolsTable.get(left.val).type, right.auxType, ctx.op.getText());
+            }
+          }
+        } else {
+          if (left.type == Type.INT) {
+            switch(op) {
+              case bugParser.GT:
+                op_r = used.pop();
+                jp1 = jp_num++;
+                jp2 = jp_num++;
+                print("LD A," + left.asInteger());
+                print("CP (" + op_r + ")");
+                print("JP C,JUMP_" + jp1); //1 -> 5
+                print("JP Z,JUMP_" + jp1);  //2 -> 5
+                print("LD A,01H");  // 3
+                print("JP JUMP_" + jp2);  // 4 -> 6
+                print("JUMP_" + jp1 + " LD A,00H");  //5
+                print("JUMP_" + jp2 + " ADD A,00H");
+                break;
+
+              case bugParser.LT:
+                op_r = used.pop();
+                jp1 = jp_num++;
+                jp2 = jp_num++;
+                print("LD A," + left.asInteger());
+                print("CP (" + op_r + ")");
+                print("JP C,JUMP_" + jp1); //1 -> 4
+                print("LD A,00H");  // 2
+                print("JP JUMP_" + jp2);  // 3 -> 5
+                print("JUMP_" + jp1 + " LD A,01H");  // 4
+                print("JUMP_" + jp2 + " ADD A,00H"); // 5
+                break;
+
+              case bugParser.GE:
+                jp1 = jp_num++;
+                jp2 = jp_num++;
+                print("LD B,A");
+                print("DEC B");
+                print("LD A," + left.asInteger());
+                print("CP B");
+                print("JP C,JUMP_" + jp1); //1 -> 5
+                print("JP Z,JUMP_" + jp1);  //2 -> 5
+                print("LD A,01H");  // 3
+                print("JP JUMP_" + jp2);  // 4 -> 6
+                print("JUMP_" + jp1 + " LD A,00H");  //5
+                print("JUMP_" + jp2 + " ADD A,00H");
+                break;
+
+              case bugParser.LE:
+                jp1 = jp_num++;
+                jp2 = jp_num++;
+                print("LD B,A");
+                print("INC B");
+                print("LD A," + left.asInteger());
+                print("CP B");
+                print("JP C,JUMP_" + jp1);
+                print("LD A,00H");
+                print("JP JUMP_" + jp2);
+                print("JUMP_" + jp1 + " LD A,01H");
+                print("JUMP_" + jp2 + " ADD A,00H");
+                break;
+            }
+            return new Type(Type.EXPR, Type.BOOL);
+          } else {
+            Errors.incompatibleTypes(left.type, right.auxType, ctx.op.getText());
+          }
+        }
+      }
+    } else {
+
+    // HOJAS
+      if (left.type == Type.INT && right.type == Type.INT) {
+        print("LD A," + left.asInteger());
+        switch(op) {
+          case bugParser.GT:
+            jp1 = jp_num++;
+            jp2 = jp_num++;
+            print("CP " + right.asInteger());
+            print("JP C,JUMP_" + jp1); //1 -> 5
+            print("JP Z,JUMP_" + jp1);  //2 -> 5
+            print("LD A,01H");  // 3
+            print("JP JUMP_" + jp2);  // 4 -> 6
+            print("JUMP_" + jp1 + " LD A,00H");  //5
+            print("JUMP_" + jp2 + " ADD A,00H");
+            break;
+
+          case bugParser.LT:
+            jp1 = jp_num++;
+            jp2 = jp_num++;
+            print("CP " + right.asInteger());
+            print("JP C,JUMP_" + jp1); //1 -> 4
+            print("LD A,00H");  // 2
+            print("JP JUMP_" + jp2);  // 3 -> 5
+            print("JUMP_" + jp1 + " LD A,01H");  // 4
+            print("JUMP_" + jp2 + " ADD A,00H"); // 5
+            break;
+
+          case bugParser.GE:
+            jp1 = jp_num++;
+            jp2 = jp_num++;
+            print("LD B," + right.asInteger());
+            print("DEC B");
+            print("CP B");
+            print("JP C,JUMP_" + jp1); //1 -> 5
+            print("JP Z,JUMP_" + jp1);  //2 -> 5
+            print("LD A,01H");  // 3
+            print("JP JUMP_" + jp2);  // 4 -> 6
+            print("JUMP_" + jp1 + " LD A,00H");  //5
+            print("JUMP_" + jp2 + " ADD A,00H");
+            break;
+
+          case bugParser.LE:
+            jp1 = jp_num++;
+            jp2 = jp_num++;
+            print("LD B," + right.asInteger());
+            print("INC B");
+            print("CP B");
+            print("JP C,JUMP_" + jp1);
+            print("LD A,00H");
+            print("JP JUMP_" + jp2);
+            print("JUMP_" + jp1 + " LD A,01H");
+            print("JUMP_" + jp2 + " ADD A,00H");
+            break;
+        }
+        return new Type(Type.EXPR, Type.BOOL);
+
+      } else if (left.type == Type.INT && right.type == Type.ID) {
+        if (SymbolsTable.containsKey(right.val)) {
+          if (SymbolsTable.get(right.val).type == Type.INT) {
+            print("LD A," + left.asInteger());
+            switch(op) {
+              case bugParser.GT:
+                jp1 = jp_num++;
+                jp2 = jp_num++;
+                print("CP (" + right.val + ")");
+                print("JP C,JUMP_" + jp1); //1 -> 5
+                print("JP Z,JUMP_" + jp1);  //2 -> 5
+                print("LD A,01H");  // 3
+                print("JP JUMP_" + jp2);  // 4 -> 6
+                print("JUMP_" + jp1 + " LD A,00H");  //5
+                print("JUMP_" + jp2 + " ADD A,00H");
+                break;
+
+              case bugParser.LT:
+                jp1 = jp_num++;
+                jp2 = jp_num++;
+                print("CP (" + right.val + ")");
+                print("JP C,JUMP_" + jp1); //1 -> 4
+                print("LD A,00H");  // 2
+                print("JP JUMP_" + jp2);  // 3 -> 5
+                print("JUMP_" + jp1 + " LD A,01H");  // 4
+                print("JUMP_" + jp2 + " ADD A,00H"); // 5
+                break;
+
+              case bugParser.GE:
+                jp1 = jp_num++;
+                jp2 = jp_num++;
+                print("LD B,(" + right.val + ")");
+                print("DEC B");
+                print("CP B");
+                print("JP C,JUMP_" + jp1); //1 -> 5
+                print("JP Z,JUMP_" + jp1);  //2 -> 5
+                print("LD A,01H");  // 3
+                print("JP JUMP_" + jp2);  // 4 -> 6
+                print("JUMP_" + jp1 + " LD A,00H");  //5
+                print("JUMP_" + jp2 + " ADD A,00H");
+                break;
+
+              case bugParser.LE:
+                jp1 = jp_num++;
+                jp2 = jp_num++;
+                print("LD B,(" + right.val + ")");
+                print("INC B");
+                print("CP B");
+                print("JP C,JUMP_" + jp1);
+                print("LD A,00H");
+                print("JP JUMP_" + jp2);
+                print("JUMP_" + jp1 + " LD A,01H");
+                print("JUMP_" + jp2 + " ADD A,00H");
+                break;
+            }
+
+            return new Type(Type.EXPR, Type.BOOL);
+          } else {
+            Errors.incompatibleTypes(left.type, SymbolsTable.get(right.val).type, ctx.op.getText());
           }
         } else {
           Errors.notDeclared(right.val);
         }
-      } else {
-        Errors.notDeclared(left.val);
+
+      } else if (left.type == Type.ID && right.type == Type.INT) {
+        if (SymbolsTable.containsKey(left.val)) {
+          if (SymbolsTable.get(left.val).type == Type.INT) {
+            print("LD A,(" + left.val + ")");
+            switch(op) {
+              case bugParser.GT:
+                jp1 = jp_num++;
+                jp2 = jp_num++;
+                print("CP " + right.asInteger());
+                print("JP C,JUMP_" + jp1); //1 -> 5
+                print("JP Z,JUMP_" + jp1);  //2 -> 5
+                print("LD A,01H");  // 3
+                print("JP JUMP_" + jp2);  // 4 -> 6
+                print("JUMP_" + jp1 + " LD A,00H");  //5
+                print("JUMP_" + jp2 + " ADD A,00H");
+                break;
+
+              case bugParser.LT:
+                jp1 = jp_num++;
+                jp2 = jp_num++;
+                print("CP " + right.asInteger());
+                print("JP C,JUMP_" + jp1); //1 -> 4
+                print("LD A,00H");  // 2
+                print("JP JUMP_" + jp2);  // 3 -> 5
+                print("JUMP_" + jp1 + " LD A,01H");  // 4
+                print("JUMP_" + jp2 + " ADD A,00H"); // 5
+                break;
+
+              case bugParser.GE:
+                jp1 = jp_num++;
+                jp2 = jp_num++;
+                print("LD B," + right.asInteger());
+                print("DEC B");
+                print("CP B");
+                print("JP C,JUMP_" + jp1); //1 -> 5
+                print("JP Z,JUMP_" + jp1);  //2 -> 5
+                print("LD A,01H");  // 3
+                print("JP JUMP_" + jp2);  // 4 -> 6
+                print("JUMP_" + jp1 + " LD A,00H");  //5
+                print("JUMP_" + jp2 + " ADD A,00H");
+                break;
+
+              case bugParser.LE:
+                jp1 = jp_num++;
+                jp2 = jp_num++;
+                print("LD B," + right.asInteger());
+                print("INC B");
+                print("CP B");
+                print("JP C,JUMP_" + jp1);
+                print("LD A,00H");
+                print("JP JUMP_" + jp2);
+                print("JUMP_" + jp1 + " LD A,01H");
+                print("JUMP_" + jp2 + " ADD A,00H");
+                break;
+            }
+
+            return new Type(Type.EXPR, Type.BOOL);
+          } else {
+            Errors.incompatibleTypes(SymbolsTable.get(left.val).type, right.type, ctx.op.getText());
+          }
+        } else {
+          Errors.notDeclared(left.val);
+        }
+
+      } else if (left.type == Type.ID && right.type == Type.ID) {
+        if (SymbolsTable.containsKey(left.val)) {
+          if (SymbolsTable.containsKey(right.val)) {
+            if (SymbolsTable.get(left.val).type == SymbolsTable.get(right.val).type) {
+              if (SymbolsTable.get(left.val).type == Type.INT) {
+                print("LD A,(" + left.val + ")");
+                switch(op) {
+                  case bugParser.GT:
+                    jp1 = jp_num++;
+                    jp2 = jp_num++;
+                    print("CP (" + right.val + ")");
+                    print("JP C,JUMP_" + jp1); //1 -> 5
+                    print("JP Z,JUMP_" + jp1);  //2 -> 5
+                    print("LD A,01H");  // 3
+                    print("JP JUMP_" + jp2);  // 4 -> 6
+                    print("JUMP_" + jp1 + " LD A,00H");  //5
+                    print("JUMP_" + jp2 + " ADD A,00H");
+                    break;
+
+                  case bugParser.LT:
+                    jp1 = jp_num++;
+                    jp2 = jp_num++;
+                    print("CP (" + right.val + ")");
+                    print("JP C,JUMP_" + jp1); //1 -> 4
+                    print("LD A,00H");  // 2
+                    print("JP JUMP_" + jp2);  // 3 -> 5
+                    print("JUMP_" + jp1 + " LD A,01H");  // 4
+                    print("JUMP_" + jp2 + " ADD A,00H"); // 5
+                    break;
+
+                  case bugParser.GE:
+                    jp1 = jp_num++;
+                    jp2 = jp_num++;
+                    print("LD B,(" + right.val + ")");
+                    print("DEC B");
+                    print("CP B");
+                    print("JP C,JUMP_" + jp1); //1 -> 5
+                    print("JP Z,JUMP_" + jp1);  //2 -> 5
+                    print("LD A,01H");  // 3
+                    print("JP JUMP_" + jp2);  // 4 -> 6
+                    print("JUMP_" + jp1 + " LD A,00H");  //5
+                    print("JUMP_" + jp2 + " ADD A,00H");
+                    break;
+
+                  case bugParser.LE:
+                    jp1 = jp_num++;
+                    jp2 = jp_num++;
+                    print("LD B,(" + right.val + ")");
+                    print("INC B");
+                    print("CP B");
+                    print("JP C,JUMP_" + jp1);
+                    print("LD A,00H");
+                    print("JP JUMP_" + jp2);
+                    print("JUMP_" + jp1 + " LD A,01H");
+                    print("JUMP_" + jp2 + " ADD A,00H");
+                    break;
+                }
+
+                return new Type(Type.EXPR, Type.BOOL);
+              } else {
+                Errors.areNot(Type.INT);
+              }
+            } else {
+              Errors.incompatibleTypes(SymbolsTable.get(left.val).type, SymbolsTable.get(right.val).type, ctx.op.getText());
+            }
+          } else {
+            Errors.notDeclared(right.val);
+          }
+        } else {
+          Errors.notDeclared(left.val);
+        }
       }
     }
     return new Type(Type.NONE);
@@ -768,7 +1123,7 @@ public class Compiler extends bugBaseVisitor<Type>{
       id = Integer.toString(used.size());
       used.add(id);
       this.ensure(id);
-      System.out.println("LD (" + id + "),A");
+      print("LD (" + id + "),A");
     }
     right = this.visit(ctx.expression_b(1));
 
@@ -777,7 +1132,7 @@ public class Compiler extends bugBaseVisitor<Type>{
       if (left.auxType == right.auxType) {
         if (left.auxType == Type.BOOL) {
           op = used.pop();
-          System.out.println("AND (" + op + ")");
+          print("AND (" + op + ")");
           return new Type(Type.EXPR, Type.BOOL, null);
         } else {
           Errors.operationNotSupported(left.auxType, right.auxType, "&&");
@@ -793,7 +1148,7 @@ public class Compiler extends bugBaseVisitor<Type>{
           if (SymbolsTable.containsKey(right.val)) {
             if (SymbolsTable.get(right.val).type == left.auxType) {
               if (SymbolsTable.get(right.val).type == Type.BOOL) {
-                System.out.println("AND (" + right.val + ")");
+                print("AND (" + right.val + ")");
                 return new Type(Type.EXPR, Type.BOOL, null);
               } else {
                 Errors.areNot(Type.BOOL);
@@ -804,7 +1159,7 @@ public class Compiler extends bugBaseVisitor<Type>{
           }
         } else {
           if (right.type == Type.BOOL) {
-            System.out.println("AND " + right.asBoolean());
+            print("AND " + right.asBoolean());
             return new Type(Type.EXPR, Type.BOOL, null);
           } else {
             Errors.incompatibleTypes(left.auxType, right.type, "&&");
@@ -817,7 +1172,7 @@ public class Compiler extends bugBaseVisitor<Type>{
           if (SymbolsTable.containsKey(left.val)) {
             if (SymbolsTable.get(left.val).type == right.auxType) {
               if (SymbolsTable.get(left.val).type == Type.BOOL) {
-                System.out.println("AND (" + left.val + ")");
+                print("AND (" + left.val + ")");
                 return new Type(Type.EXPR, Type.BOOL, null);
               } else {
                 Errors.areNot(Type.BOOL);
@@ -828,7 +1183,7 @@ public class Compiler extends bugBaseVisitor<Type>{
           }
         } else {
           if (left.type == Type.BOOL) {
-            System.out.println("AND " + left.asBoolean());
+            print("AND " + left.asBoolean());
             return new Type(Type.EXPR, Type.BOOL, null);
           } else {
             Errors.incompatibleTypes(SymbolsTable.get(left.val).type, right.auxType, "&&");
@@ -838,15 +1193,15 @@ public class Compiler extends bugBaseVisitor<Type>{
     } else {
       // HOJAS
       if (left.type == Type.BOOL && right.type == Type.BOOL) {
-        System.out.println("LD A," + left.asBoolean());
-        System.out.println("AND " + right.asBoolean());
+        print("LD A," + left.asBoolean());
+        print("AND " + right.asBoolean());
         return new Type(Type.EXPR, Type.BOOL, null);
 
       } else if (left.type == Type.BOOL && right.type == Type.ID) {
         if (SymbolsTable.containsKey(right.val)) {
           if (SymbolsTable.get(right.val).type == Type.BOOL) {
-            System.out.println("LD A," + left.asBoolean());
-            System.out.println("AND (" + right.val + ")");
+            print("LD A," + left.asBoolean());
+            print("AND (" + right.val + ")");
             return new Type(Type.EXPR, Type.BOOL, null);
           } else {
             Errors.incompatibleTypes(left.type, SymbolsTable.get(right.val).type, "&&");
@@ -858,8 +1213,8 @@ public class Compiler extends bugBaseVisitor<Type>{
       } else if (left.type == Type.ID && right.type == Type.BOOL) {
         if (SymbolsTable.containsKey(left.val)) {
           if (SymbolsTable.get(left.val).type == Type.BOOL) {
-            System.out.println("LD A,(" + left.val + ")");
-            System.out.println("AND " + right.asBoolean());
+            print("LD A,(" + left.val + ")");
+            print("AND " + right.asBoolean());
             return new Type(Type.EXPR, Type.BOOL, null);
           } else {
             Errors.incompatibleTypes(SymbolsTable.get(left.val).type, right.type, "&&");
@@ -873,8 +1228,8 @@ public class Compiler extends bugBaseVisitor<Type>{
           if (SymbolsTable.containsKey(right.val)) {
             if (SymbolsTable.get(left.val).type == SymbolsTable.get(right.val).type) {
               if (SymbolsTable.get(left.val).type == Type.BOOL) {
-                System.out.println("LD A,(" + left.val + ")");
-                System.out.println("AND (" + right.val + ")");
+                print("LD A,(" + left.val + ")");
+                print("AND (" + right.val + ")");
                 return new Type(Type.EXPR, Type.BOOL, null);
               } else {
                 Errors.areNot(Type.BOOL);
@@ -902,7 +1257,7 @@ public class Compiler extends bugBaseVisitor<Type>{
       id = Integer.toString(used.size());
       used.add(id);
       this.ensure(id);
-      System.out.println("LD (" + id + "),A");
+      print("LD (" + id + "),A");
     }
     right = this.visit(ctx.expression_b(1));
 
@@ -911,7 +1266,7 @@ public class Compiler extends bugBaseVisitor<Type>{
       if (left.auxType == right.auxType) {
         if (left.auxType == Type.BOOL) {
           op = used.pop();
-          System.out.println("OR (" + op + ")");
+          print("OR (" + op + ")");
           return new Type(Type.EXPR, Type.BOOL, null);
         } else {
           Errors.operationNotSupported(left.auxType, right.auxType, "&&");
@@ -927,7 +1282,7 @@ public class Compiler extends bugBaseVisitor<Type>{
           if (SymbolsTable.containsKey(right.val)) {
             if (SymbolsTable.get(right.val).type == left.auxType) {
               if (SymbolsTable.get(right.val).type == Type.BOOL) {
-                System.out.println("OR (" + right.val + ")");
+                print("OR (" + right.val + ")");
                 return new Type(Type.EXPR, Type.BOOL, null);
               } else {
                 Errors.areNot(Type.BOOL);
@@ -938,7 +1293,7 @@ public class Compiler extends bugBaseVisitor<Type>{
           }
         } else {
           if (right.type == Type.BOOL) {
-            System.out.println("OR " + right.asBoolean());
+            print("OR " + right.asBoolean());
             return new Type(Type.EXPR, Type.BOOL, null);
           } else {
             Errors.incompatibleTypes(left.auxType, right.type, "&&");
@@ -951,7 +1306,7 @@ public class Compiler extends bugBaseVisitor<Type>{
           if (SymbolsTable.containsKey(left.val)) {
             if (SymbolsTable.get(left.val).type == right.auxType) {
               if (SymbolsTable.get(left.val).type == Type.BOOL) {
-                System.out.println("OR (" + left.val + ")");
+                print("OR (" + left.val + ")");
                 return new Type(Type.EXPR, Type.BOOL, null);
               } else {
                 Errors.areNot(Type.BOOL);
@@ -962,7 +1317,7 @@ public class Compiler extends bugBaseVisitor<Type>{
           }
         } else {
           if (left.type == Type.BOOL) {
-            System.out.println("OR " + left.asBoolean());
+            print("OR " + left.asBoolean());
             return new Type(Type.EXPR, Type.BOOL, null);
           } else {
             Errors.incompatibleTypes(SymbolsTable.get(left.val).type, right.auxType, "&&");
@@ -972,15 +1327,15 @@ public class Compiler extends bugBaseVisitor<Type>{
     } else {
       // HOJAS
       if (left.type == Type.BOOL && right.type == Type.BOOL) {
-        System.out.println("LD A," + left.asBoolean());
-        System.out.println("OR " + right.asBoolean());
+        print("LD A," + left.asBoolean());
+        print("OR " + right.asBoolean());
         return new Type(Type.EXPR, Type.BOOL, null);
 
       } else if (left.type == Type.BOOL && right.type == Type.ID) {
         if (SymbolsTable.containsKey(right.val)) {
           if (SymbolsTable.get(right.val).type == Type.BOOL) {
-            System.out.println("LD A," + left.asBoolean());
-            System.out.println("OR (" + right.val + ")");
+            print("LD A," + left.asBoolean());
+            print("OR (" + right.val + ")");
             return new Type(Type.EXPR, Type.BOOL, null);
           } else {
             Errors.incompatibleTypes(left.type, SymbolsTable.get(right.val).type, "&&");
@@ -992,8 +1347,8 @@ public class Compiler extends bugBaseVisitor<Type>{
       } else if (left.type == Type.ID && right.type == Type.BOOL) {
         if (SymbolsTable.containsKey(left.val)) {
           if (SymbolsTable.get(left.val).type == Type.BOOL) {
-            System.out.println("LD A,(" + left.val + ")");
-            System.out.println("OR " + right.asBoolean());
+            print("LD A,(" + left.val + ")");
+            print("OR " + right.asBoolean());
             return new Type(Type.EXPR, Type.BOOL, null);
           } else {
             Errors.incompatibleTypes(SymbolsTable.get(left.val).type, right.type, "&&");
@@ -1007,8 +1362,8 @@ public class Compiler extends bugBaseVisitor<Type>{
           if (SymbolsTable.containsKey(right.val)) {
             if (SymbolsTable.get(left.val).type == SymbolsTable.get(right.val).type) {
               if (SymbolsTable.get(left.val).type == Type.BOOL) {
-                System.out.println("LD A,(" + left.val + ")");
-                System.out.println("OR (" + right.val + ")");
+                print("LD A,(" + left.val + ")");
+                print("OR (" + right.val + ")");
                 return new Type(Type.EXPR, Type.BOOL, null);
               } else {
                 Errors.areNot(Type.BOOL);
@@ -1034,7 +1389,402 @@ public class Compiler extends bugBaseVisitor<Type>{
 
   @Override
   public Type visitEqNeqExpr_b(bugParser.EqNeqExpr_bContext ctx) {
-    return super.visitEqNeqExpr_b(ctx); //To change body of generated methods, choose Tools | Templates.
+    boolean op = ctx.op.getType() == bugParser.EQ;
+    int jp1 = 0, jp2 = 0;
+    String id = null, op_l = null;
+    Type left = null, right = null;
+    left = this.visit(ctx.expression_b(0));
+    if (left.type == Type.EXPR && ctx.getChild(2).getChildCount() > 1) {
+      id = Integer.toString(used.size());
+      used.add(id);
+      this.ensure(id);
+      print("LD (" + id + "),A");
+    }
+    right = this.visit(ctx.expression_b(1));
+    
+    // EXPR en IZQ y DER
+    if (left.type == Type.EXPR && right.type == Type.EXPR) {
+      if (left.auxType == right.auxType) {
+        if (left.auxType == Type.BOOL) {
+          op_l = used.pop();
+          jp1 = jp_num++;
+          jp2 = jp_num++;
+          print("CP (" + op_l + ")");
+          print("JP Z,JUMP_" + jp1);
+          print(op ? "LD A,00H" : "LD A,01H");
+          print("JP JUMP_" + jp2);
+          print(op ? "JUMP_" + jp1 + " LD A,01H" : "JUMP_" + jp1 + " LD A,00H");
+          print("JUMP_" + jp2 + " ADD A,00H");
+          return new Type(Type.EXPR, Type.BOOL);
+        } else {
+          Errors.operationNotSupported(left.auxType, right.auxType, ctx.op.getText());
+        }
+      } else {
+        Errors.incompatibleTypes(left.auxType, right.auxType, ctx.op.getText());
+      }
+    } else if (left.type == Type.EXPR || right.type == Type.EXPR) {
+
+    // EXPR en izquierda
+      if (left.type == Type.EXPR) {
+        if (right.type == Type.ID) {
+          if (SymbolsTable.containsKey(right.val)) {
+            if (SymbolsTable.get(right.val).type == left.auxType) {
+              if (SymbolsTable.get(right.val).type == Type.BOOL) {
+                jp1 = jp_num++;
+                jp2 = jp_num++;
+                print("CP (" + right.val + ")");
+                print("JP Z,JUMP_" + jp1);
+                print(op ? "LD A,00H" : "LD A,01H");
+                print("JP JUMP_" + jp2);
+                print(op ? "JUMP_" + jp1 + " LD A,01H" : "JUMP_" + jp1 + " LD A,00H");
+                print("JUMP_" + jp2 + " ADD A,00H");
+                return new Type(Type.EXPR, Type.BOOL);
+              } else {
+                Errors.areNot(Type.INT);
+              }
+            } else {
+              Errors.incompatibleTypes(left.auxType, SymbolsTable.get(right.val).type, ctx.op.getText());
+            }
+          }
+        } else {
+          if (right.type == Type.BOOL) {
+            jp1 = jp_num++;
+            jp2 = jp_num++;
+            print("CP " + right.asBoolean());
+            print("JP Z,JUMP_" + jp1);
+            print(op ? "LD A,00H" : "LD A,01H");
+            print("JP JUMP_" + jp2);
+            print(op ? "JUMP_" + jp1 + " LD A,01H" : "JUMP_" + jp1 + " LD A,00H");
+            print("JUMP_" + jp2 + " ADD A,00H");
+            return new Type(Type.EXPR, Type.BOOL);
+          } else {
+            Errors.incompatibleTypes(left.auxType, right.type, ctx.op.getText());
+          }
+        }
+      } else {
+
+      // EXPR en derecha
+        if (left.type == Type.ID) {
+          if (SymbolsTable.containsKey(left.val)) {
+            if (SymbolsTable.get(left.val).type == right.auxType) {
+              if (SymbolsTable.get(left.val).type == Type.BOOL) {
+                jp1 = jp_num++;
+                jp2 = jp_num++;
+                print("CP (" + left.val + ")");
+                print("JP Z,JUMP_" + jp1);
+                print(op ? "LD A,00H" : "LD A,01H");
+                print("JP JUMP_" + jp2);
+                print(op ? "JUMP_" + jp1 + " LD A,01H" : "JUMP_" + jp1 + " LD A,00H");
+                print("JUMP_" + jp2 + " ADD A,00H");
+                return new Type(Type.EXPR, Type.BOOL);
+              } else {
+                Errors.areNot(Type.INT);
+              }
+            } else {
+              Errors.incompatibleTypes(SymbolsTable.get(left.val).type, right.auxType, ctx.op.getText());
+            }
+          }
+        } else {
+          if (left.type == Type.BOOL) {
+            jp1 = jp_num++;
+            jp2 = jp_num++;
+            print("CP " + left.asBoolean());
+            print("JP Z,JUMP_" + jp1);
+            print(op ? "LD A,00H" : "LD A,01H");
+            print("JP JUMP_" + jp2);
+            print(op ? "JUMP_" + jp1 + " LD A,01H" : "JUMP_" + jp1 + " LD A,00H");
+            print("JUMP_" + jp2 + " ADD A,00H");
+            return new Type(Type.EXPR, Type.BOOL);
+          } else {
+            Errors.incompatibleTypes(left.type, right.auxType, ctx.op.getText());
+          }
+        }
+      }
+    } else {
+      // HOJAS
+      if (left.type == Type.BOOL && right.type == Type.BOOL) {
+        jp1 = jp_num++;
+        jp2 = jp_num++;
+        print("LD A," + left.asBoolean());
+        print("CP " + right.asBoolean());
+        print("JP Z,JUMP_" + jp1);
+        print(op ? "LD A,00H" : "LD A,01H");
+        print("JP JUMP_" + jp2);
+        print(op ? "JUMP_" + jp1 + " LD A,01H" : "JUMP_" + jp1 + " LD A,00H");
+        print("JUMP_" + jp2 + " ADD A,00H");
+        return new Type(Type.EXPR, Type.BOOL);
+
+      } else if (left.type == Type.BOOL && right.type == Type.ID) {
+        if (SymbolsTable.containsKey(right.val)) {
+          if (SymbolsTable.get(right.val).type == Type.BOOL) {
+            jp1 = jp_num++;
+            jp2 = jp_num++;
+            print("LD A," + left.asBoolean());
+            print("CP (" + right.val + ")");
+            print("JP Z,JUMP_" + jp1);
+            print(op ? "LD A,00H" : "LD A,01H");
+            print("JP JUMP_" + jp2);
+            print(op ? "JUMP_" + jp1 + " LD A,01H" : "JUMP_" + jp1 + " LD A,00H");
+            print("JUMP_" + jp2 + " ADD A,00H");
+
+            return new Type(Type.EXPR, Type.BOOL);
+          } else {
+            Errors.incompatibleTypes(left.type, SymbolsTable.get(right.val).type, ctx.op.getText());
+          }
+        } else {
+          Errors.notDeclared(right.val);
+        }
+
+      } else if (left.type == Type.ID && right.type == Type.BOOL) {
+        if (SymbolsTable.containsKey(left.val)) {
+          if (SymbolsTable.get(left.val).type == Type.BOOL) {
+            jp1 = jp_num++;
+            jp2 = jp_num++;
+            print("LD A,(" + left.val + ")");
+            print("CP " + right.asBoolean());
+            print("JP Z,JUMP_" + jp1);
+            print(op ? "LD A,00H" : "LD A,01H");
+            print("JP JUMP_" + jp2);
+            print(op ? "JUMP_" + jp1 + " LD A,01H" : "JUMP_" + jp1 + " LD A,00H");
+            print("JUMP_" + jp2 + " ADD A,00H");
+            return new Type(Type.EXPR, Type.BOOL);
+          } else {
+            Errors.incompatibleTypes(SymbolsTable.get(left.val).type, right.type, ctx.op.getText());
+          }
+        } else {
+          Errors.notDeclared(left.val);
+        }
+
+
+      } else if (left.type == Type.ID && right.type == Type.ID) {
+        if (SymbolsTable.containsKey(left.val)) {
+          if (SymbolsTable.containsKey(right.val)) {
+            if (SymbolsTable.get(left.val).type == SymbolsTable.get(right.val).type) {
+              if (SymbolsTable.get(left.val).type == Type.BOOL) {
+                jp1 = jp_num++;
+                jp2 = jp_num++;
+                print("LD A,(" + left.val + ")");
+                print("CP (" + right.val + ")");
+                print("JP Z,JUMP_" + jp1);
+                print(op ? "LD A,00H" : "LD A,01H");
+                print("JP JUMP_" + jp2);
+                print(op ? "JUMP_" + jp1 + " LD A,01H" : "JUMP_" + jp1 + " LD A,00H");
+                print("JUMP_" + jp2 + " ADD A,00H");
+
+                return new Type(Type.EXPR, Type.BOOL);
+              } else {
+                Errors.areNot(Type.BOOL);
+              }
+            } else {
+              Errors.incompatibleTypes(SymbolsTable.get(left.val).type, SymbolsTable.get(right.val).type, ctx.op.getText());
+            }
+          } else {
+            Errors.notDeclared(right.val);
+          }
+        } else {
+          Errors.notDeclared(left.val);
+        }
+      }
+    }
+    return new Type(Type.NONE);
+  }
+  
+  @Override
+  public Type visitEqNeqExpr_a(bugParser.EqNeqExpr_aContext ctx) {
+    boolean op = ctx.op.getType() == bugParser.EQ;
+    int jp1 = 0, jp2 = 0;
+    String id = null, op_l = null;
+    Type left = null, right = null;
+    left = this.visit(ctx.expression_a(0));
+    if (left.type == Type.EXPR && ctx.getChild(2).getChildCount() > 1) {
+      id = Integer.toString(used.size());
+      used.add(id);
+      this.ensure(id);
+      print("LD (" + id + "),A");
+    }
+    right = this.visit(ctx.expression_a(1));
+    
+    // EXPR en IZQ y DER
+    if (left.type == Type.EXPR && right.type == Type.EXPR) {
+      if (left.auxType == right.auxType) {
+        if (left.auxType == Type.INT) {
+          op_l = used.pop();
+          jp1 = jp_num++;
+          jp2 = jp_num++;
+          print("CP (" + op_l + ")");
+          print("JP Z,JUMP_" + jp1);
+          print(op ? "LD A,00H" : "LD A,01H");
+          print("JP JUMP_" + jp2);
+          print(op ? "JUMP_" + jp1 + " LD A,01H" : "JUMP_" + jp1 + " LD A,00H");
+          print("JUMP_" + jp2 + " ADD A,00H");
+          return new Type(Type.EXPR, Type.BOOL);
+        } else {
+          Errors.operationNotSupported(left.auxType, right.auxType, ctx.op.getText());
+        }
+      } else {
+        Errors.incompatibleTypes(left.auxType, right.auxType, ctx.op.getText());
+      }
+    } else if (left.type == Type.EXPR || right.type == Type.EXPR) {
+
+    // EXPR en izquierda
+      if (left.type == Type.EXPR) {
+        if (right.type == Type.ID) {
+          if (SymbolsTable.containsKey(right.val)) {
+            if (SymbolsTable.get(right.val).type == left.auxType) {
+              if (SymbolsTable.get(right.val).type == Type.INT) {
+                jp1 = jp_num++;
+                jp2 = jp_num++;
+                print("CP (" + right.val + ")");
+                print("JP Z,JUMP_" + jp1);
+                print(op ? "LD A,00H" : "LD A,01H");
+                print("JP JUMP_" + jp2);
+                print(op ? "JUMP_" + jp1 + " LD A,01H" : "JUMP_" + jp1 + " LD A,00H");
+                print("JUMP_" + jp2 + " ADD A,00H");
+                return new Type(Type.EXPR, Type.BOOL);
+              } else {
+                Errors.areNot(Type.INT);
+              }
+            } else {
+              Errors.incompatibleTypes(left.auxType, SymbolsTable.get(right.val).type, ctx.op.getText());
+            }
+          }
+        } else {
+          if (right.type == Type.INT) {
+            jp1 = jp_num++;
+            jp2 = jp_num++;
+            print("CP " + right.asInteger());
+            print("JP Z,JUMP_" + jp1);
+            print(op ? "LD A,00H" : "LD A,01H");
+            print("JP JUMP_" + jp2);
+            print(op ? "JUMP_" + jp1 + " LD A,01H" : "JUMP_" + jp1 + " LD A,00H");
+            print("JUMP_" + jp2 + " ADD A,00H");
+            return new Type(Type.EXPR, Type.BOOL);
+          } else {
+            Errors.incompatibleTypes(left.auxType, right.type, ctx.op.getText());
+          }
+        }
+      } else {
+
+      // EXPR en derecha
+        if (left.type == Type.ID) {
+          if (SymbolsTable.containsKey(left.val)) {
+            if (SymbolsTable.get(left.val).type == right.auxType) {
+              if (SymbolsTable.get(left.val).type == Type.INT) {
+                jp1 = jp_num++;
+                jp2 = jp_num++;
+                print("CP (" + left.val + ")");
+                print("JP Z,JUMP_" + jp1);
+                print(op ? "LD A,00H" : "LD A,01H");
+                print("JP JUMP_" + jp2);
+                print(op ? "JUMP_" + jp1 + " LD A,01H" : "JUMP_" + jp1 + " LD A,00H");
+                print("JUMP_" + jp2 + " ADD A,00H");
+                return new Type(Type.EXPR, Type.BOOL);
+              } else {
+                Errors.areNot(Type.INT);
+              }
+            } else {
+              Errors.incompatibleTypes(SymbolsTable.get(left.val).type, right.auxType, ctx.op.getText());
+            }
+          }
+        } else {
+          if (left.type == Type.INT) {
+            jp1 = jp_num++;
+            jp2 = jp_num++;
+            print("CP " + left.asInteger());
+            print("JP Z,JUMP_" + jp1);
+            print(op ? "LD A,00H" : "LD A,01H");
+            print("JP JUMP_" + jp2);
+            print(op ? "JUMP_" + jp1 + " LD A,01H" : "JUMP_" + jp1 + " LD A,00H");
+            print("JUMP_" + jp2 + " ADD A,00H");
+            return new Type(Type.EXPR, Type.BOOL);
+          } else {
+            Errors.incompatibleTypes(left.type, right.auxType, ctx.op.getText());
+          }
+        }
+      }
+    } else {  
+      // HOJAS
+      if (left.type == Type.INT && right.type == Type.INT) {
+        jp1 = jp_num++;
+        jp2 = jp_num++;
+        print("LD A," + left.asInteger());
+        print("CP " + right.asInteger());
+        print("JP Z,JUMP_" + jp1);
+        print(op ? "LD A,00H" : "LD A,01H");
+        print("JP JUMP_" + jp2);
+        print(op ? "JUMP_" + jp1 + " LD A,01H" : "JUMP_" + jp1 + " LD A,00H");
+        print("JUMP_" + jp2 + " ADD A,00H");
+        return new Type(Type.EXPR, Type.BOOL);
+
+      } else if (left.type == Type.INT && right.type == Type.ID) {
+        if (SymbolsTable.containsKey(right.val)) {
+          if (SymbolsTable.get(right.val).type == Type.INT) {
+            jp1 = jp_num++;
+            jp2 = jp_num++;
+            print("LD A," + left.asInteger());
+            print("CP (" + right.val + ")");
+            print("JP Z,JUMP_" + jp1);
+            print(op ? "LD A,00H" : "LD A,01H");
+            print("JP JUMP_" + jp2);
+            print(op ? "JUMP_" + jp1 + " LD A,01H" : "JUMP_" + jp1 + " LD A,00H");
+            print("JUMP_" + jp2 + " ADD A,00H");
+
+            return new Type(Type.EXPR, Type.BOOL);
+          } else {
+            Errors.incompatibleTypes(left.type, SymbolsTable.get(right.val).type, ctx.op.getText());
+          }
+        } else {
+          Errors.notDeclared(right.val);
+        }
+
+      } else if (left.type == Type.ID && right.type == Type.INT) {
+        if (SymbolsTable.containsKey(left.val)) {
+          if (SymbolsTable.get(left.val).type == Type.INT) {
+            jp1 = jp_num++;
+            jp2 = jp_num++;
+            print("LD A,(" + left.val + ")");
+            print("CP " + right.asInteger());
+            print("JP Z,JUMP_" + jp1);
+            print(op ? "LD A,00H" : "LD A,01H");
+            print("JP JUMP_" + jp2);
+            print(op ? "JUMP_" + jp1 + " LD A,01H" : "JUMP_" + jp1 + " LD A,00H");
+            print("JUMP_" + jp2 + " ADD A,00H");
+            return new Type(Type.EXPR, Type.BOOL);
+          } else {
+            Errors.incompatibleTypes(SymbolsTable.get(left.val).type, right.type, ctx.op.getText());
+          }
+        } else {
+          Errors.notDeclared(left.val);
+        }
+
+
+      } else if (left.type == Type.ID && right.type == Type.ID) {
+        if (SymbolsTable.containsKey(left.val)) {
+          if (SymbolsTable.containsKey(right.val)) {
+            if (SymbolsTable.get(left.val).type == SymbolsTable.get(right.val).type) {
+              jp1 = jp_num++;
+              jp2 = jp_num++;
+              print("LD A,(" + left.val + ")");
+              print("CP (" + right.val + ")");
+              print("JP Z,JUMP_" + jp1);
+              print(op ? "LD A,00H" : "LD A,01H");
+              print("JP JUMP_" + jp2);
+              print(op ? "JUMP_" + jp1 + " LD A,01H" : "JUMP_" + jp1 + " LD A,00H");
+              print("JUMP_" + jp2 + " ADD A,00H");
+
+              return new Type(Type.EXPR, Type.BOOL);
+            } else {
+              Errors.incompatibleTypes(SymbolsTable.get(left.val).type, SymbolsTable.get(right.val).type, ctx.op.getText());
+            }
+          } else {
+            Errors.notDeclared(right.val);
+          }
+        } else {
+          Errors.notDeclared(left.val);
+        }
+      }
+    }
+    return new Type(Type.NONE);
   }
 
   @Override
@@ -1043,24 +1793,19 @@ public class Compiler extends bugBaseVisitor<Type>{
   }
 
   @Override
-  public Type visitEqNeqExpr_a(bugParser.EqNeqExpr_aContext ctx) {
-    return super.visitEqNeqExpr_a(ctx); //To change body of generated methods, choose Tools | Templates.
-  }
-
-  @Override
   public Type visitNotExpr_b(bugParser.NotExpr_bContext ctx) {
     Type op = this.visit(ctx.expression_b());
     if (op.type == Type.INT) {
       Errors.isNot(Type.BOOL);
     } else if (op.type == Type.BOOL) {
-      System.out.println("LD A," + op.asBoolean());
-      System.out.println("XOR 01H");
+      print("LD A," + op.asBoolean());
+      print("XOR 01H");
       return new Type(Type.EXPR, Type.BOOL, null);
     } else if (op.type == Type.ID) {
       if (SymbolsTable.containsKey(op.val)) {
         if (SymbolsTable.get(op.val).type == Type.BOOL) {
-          System.out.println("LD A,(" + op.val + ")");
-          System.out.println("XOR 01H");
+          print("LD A,(" + op.val + ")");
+          print("XOR 01H");
           return new Type(Type.EXPR, Type.BOOL, null);
         } else {
           Errors.isNot(Type.BOOL);
@@ -1070,7 +1815,7 @@ public class Compiler extends bugBaseVisitor<Type>{
       }
     } else if (op.type == Type.EXPR) {
       if (op.auxType == Type.BOOL) {
-        System.out.println("XOR 01H");
+        print("XOR 01H");
         return new Type(Type.EXPR, Type.BOOL, null);
       } else {
         Errors.isNot(Type.BOOL);
