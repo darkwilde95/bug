@@ -19,6 +19,7 @@ public class Compiler extends bugBaseVisitor<Type>{
   private org.antlr.v4.runtime.tree.ParseTree last = null;
   private Stack<String> used = new Stack();
   private int jp_num = 0;
+  private boolean add_mult = false, add_div = false;
 
   private void ensure(String id) {
     if (!SymbolsTable.containsKey(id)) {
@@ -27,7 +28,7 @@ public class Compiler extends bugBaseVisitor<Type>{
   }
 
   private void print(String instruction) {
-     System.out.println(instruction);
+    System.out.println(instruction);
   }
 
   @Override
@@ -95,7 +96,171 @@ public class Compiler extends bugBaseVisitor<Type>{
 
   @Override
   public Type visitMultDivExpr_a(bugParser.MultDivExpr_aContext ctx) {
-    return super.visitMultDivExpr_a(ctx); //To change body of generated methods, choose Tools | Templates.
+    boolean op = ctx.op.getType() == bugParser.MULT;
+    if (op) add_mult = true;
+    if (!op) add_div = true;
+    String id = null, op_l = null;
+    Type left = null, right = null;
+    left = this.visit(ctx.expression_a(0));
+    if (left.type == Type.EXPR && ctx.getChild(2).getChildCount() > 1) {
+      id = Integer.toString(used.size());
+      used.add(id);
+      this.ensure(id);
+      print("LD (" + id + "),A");
+    }
+    right = this.visit(ctx.expression_a(1));
+    
+    // EXPR en IZQ y DER
+    if (left.type == Type.EXPR && right.type == Type.EXPR) {
+      if (left.auxType == right.auxType) {
+        if (left.auxType == Type.INT) {
+          op_l = used.pop();
+          print("LD Ac,00H");
+          print("LD D,(" + op_l + ")");
+          print("LD E,A");
+          print(op ? "CALL MULT" : "CALL DIV");
+          print("LD A,Ac");
+          return new Type(Type.EXPR, Type.INT, null);
+        } else {
+          Errors.operationNotSupported(left.auxType, right.auxType, ctx.op.getText());
+        }
+      } else {
+        Errors.incompatibleTypes(left.auxType, right.auxType, ctx.op.getText());
+      }
+    } else if (left.type == Type.EXPR || right.type == Type.EXPR) {
+
+    // EXPR en izquierda
+      if (left.type == Type.EXPR) {
+        if (right.type == Type.ID) {
+          if (SymbolsTable.containsKey(right.val)) {
+            if (SymbolsTable.get(right.val).type == left.auxType) {
+              if (SymbolsTable.get(right.val).type == Type.INT) {
+                print("LD Ac,00H");
+                print("LD D,A");
+                print("LD E,(" + right.val + ")");
+                print(op ? "CALL MULT" : "CALL DIV");
+                print("LD A,Ac");
+                return new Type(Type.EXPR, Type.INT, null);
+              } else {
+                Errors.areNot(Type.INT);
+              }
+            } else {
+              Errors.incompatibleTypes(left.auxType, SymbolsTable.get(right.val).type, ctx.op.getText());
+            }
+          }
+        } else {
+          if (right.type == Type.INT) {
+            print("LD Ac,00H");
+            print("LD D,A");
+            print("LD E," + right.asInteger());
+            print(op ? "CALL MULT" : "CALL DIV");
+            print("LD A,Ac");
+            return new Type(Type.EXPR, Type.INT, null);
+          } else {
+            Errors.incompatibleTypes(left.auxType, right.type, ctx.op.getText());
+          }
+        }
+      } else {
+
+      // EXPR en derecha
+        if (left.type == Type.ID) {
+          if (SymbolsTable.containsKey(left.val)) {
+            if (SymbolsTable.get(left.val).type == right.auxType) {
+              if (SymbolsTable.get(left.val).type == Type.INT) {
+                print("LD Ac,00H");
+                print("LD D,(" + left.val + ")");               
+                print("LD E,A");
+                print(op ? "CALL MULT" : "CALL DIV");
+                print("LD A,Ac");
+                return new Type(Type.EXPR, Type.INT, null);
+              } else {
+                Errors.areNot(Type.INT);
+              }
+            } else {
+              Errors.incompatibleTypes(SymbolsTable.get(left.val).type, right.auxType, ctx.op.getText());
+            }
+          }
+        } else {
+          if (left.type == Type.INT) {
+            print("LD Ac,00H");
+            print("LD D," + left.asInteger());               
+            print("LD E,A");
+            print(op ? "CALL MULT" : "CALL DIV");
+            print("LD A,Ac");
+            return new Type(Type.EXPR, Type.INT, null);
+          } else {
+            Errors.incompatibleTypes(left.type, right.auxType, ctx.op.getText());
+          }
+        }
+      }
+    } else {
+      // HOJAS
+      if (left.type == Type.INT && right.type == Type.INT) {
+        print("LD Ac,00H"); 
+        print("LD D," + left.asInteger());
+        print("LD E," + right.asInteger()); 
+        print(op ? "CALL MULT" : "CALL DIV");
+        print("LD A,Ac");
+        return new Type(Type.EXPR, Type.INT, null);
+
+      } else if (left.type == Type.INT && right.type == Type.ID) {
+        if (SymbolsTable.containsKey(right.val)) {
+          if (SymbolsTable.get(right.val).type == Type.INT) {
+            print("LD Ac,00H");
+            print("LD D," + left.asInteger());
+            print("LD E,(" + right.val + ")");   
+            print(op ? "CALL MULT" : "CALL DIV");
+            print("LD A,Ac");
+            return new Type(Type.EXPR, Type.INT, null);
+          } else {
+            Errors.incompatibleTypes(left.type, SymbolsTable.get(right.val).type, ctx.op.getText());
+          }
+        } else {
+          Errors.notDeclared(right.val);
+        }
+
+      } else if (left.type == Type.ID && right.type == Type.INT) {
+        if (SymbolsTable.containsKey(left.val)) {
+          if (SymbolsTable.get(left.val).type == Type.INT) {
+            print("LD Ac,00H");
+            print("LD D,(" + left.val + ")");
+            print("LD E," + right.asInteger());
+            print(op ? "CALL MULT" : "CALL DIV");
+            print("LD A,Ac");
+            return new Type(Type.EXPR, Type.INT, null);
+          } else {
+            Errors.incompatibleTypes(SymbolsTable.get(left.val).type, right.type, ctx.op.getText());
+          }
+        } else {
+          Errors.notDeclared(left.val);
+        }
+
+      } else if (left.type == Type.ID && right.type == Type.ID) {
+        if (SymbolsTable.containsKey(left.val)) {
+          if (SymbolsTable.containsKey(right.val)) {
+            if (SymbolsTable.get(left.val).type == SymbolsTable.get(right.val).type) {
+              if (SymbolsTable.get(left.val).type == Type.INT) {
+                print("LD Ac,00H");
+                print("LD D,(" + left.val + ")");
+                print("LD E,(" + right.val + ")");
+                print(op ? "CALL MULT" : "CALL DIV");
+                print("LD A,Ac");
+                return new Type(Type.EXPR, Type.INT, null);
+              } else {
+                Errors.areNot(Type.INT);
+              }
+            } else {
+              Errors.incompatibleTypes(SymbolsTable.get(left.val).type, SymbolsTable.get(right.val).type, ctx.op.getText());
+            }
+          } else {
+            Errors.notDeclared(right.val);
+          }
+        } else {
+          Errors.notDeclared(left.val);
+        }
+      }
+    }
+    return new Type(Type.NONE);
   }
 
   @Override

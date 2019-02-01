@@ -21,9 +21,6 @@ public class Processor {
   private final int zero = 2;
   private final int pv = 3;
   private final int aux_carry = 4;
-  // private final int z = 0;
-  // private final int flag2 = 0;
-  // private final int flag3 = 0;
 
 
   // Memoria
@@ -60,25 +57,29 @@ public class Processor {
       this.reg_8bit[reg]=val;
       this.ui.printLabelReg(reg,String.valueOf(val));
   }
+
   public void setReg_16bit(int reg, int val){
       this.reg_16bit[reg]=val;
       this.ui.printLabel16Reg(reg,String.valueOf(val));
   }
+
   public void setMem(int pos, int val){
       this.mem.set(pos, val);
       ui.printLabelMem(pos, String.valueOf(val));
   }
+
   public void setFlags(int flag, boolean val){
       this.flags[flag]=val;
       this.ui.printLabelFlag(flag,val);
   }
+
   public void runProgram() throws IOException, InterruptedException {
     int i=0;
 
     while(!this.end) {
       this.fetch();
       this.execute();
-      Thread.sleep(10);
+      Thread.sleep(1500);
       i++;
     }
   }
@@ -92,7 +93,6 @@ public class Processor {
     instruction[4] = this.mem.get(this.reg_16bit[PC]+4);
     this.ir.decodeInstruction(instruction);
     this.setReg_16bit(PC, this.reg_16bit[PC]+5);
-    //this.reg_16bit[PC] += 5;
   }
 
   public void checkByteLimit() {
@@ -170,7 +170,6 @@ public class Processor {
         System.out.println("resta");
         res = ALU.sub(this.reg_8bit[A], this.mem.get(this.ir.op2));
         this.setReg_8bit(A,res);
-        //this.reg_8bit[A] = res;
         break;
 
       // sub (with mem 8 bits) accum
@@ -184,13 +183,13 @@ public class Processor {
       // increment1 (with reg 8 bits)-> op2
       case 8:
         System.out.println("incremento");
-        res = this.reg_8bit[this.ir.op2]++;
+        this.setReg_8bit(this.ir.op2, this.reg_8bit[this.ir.op2]+1);
         break;
 
       // increment1 (with reg 16 bits)
       case 9:
         System.out.println("incremento");
-        res = this.reg_16bit[this.ir.op2]++;
+        this.setReg_16bit(this.ir.op2, this.reg_16bit[this.ir.op2]+1);
         break;
 
       // increment1 (with mem ind 8 bits)
@@ -212,13 +211,13 @@ public class Processor {
       // decrement1 (with reg 8 bits)
       case 12:
         System.out.println("decremento");
-        res = this.reg_8bit[this.ir.op2]--;
+        this.setReg_8bit(this.ir.op2, this.reg_8bit[this.ir.op2]-1);
         break;
 
       // decrement1 (with reg 16 bits)
       case 13:
         System.out.println("decremento");
-        res = this.reg_16bit[this.ir.op2]--;
+        this.setReg_16bit(this.ir.op2, this.reg_16bit[this.ir.op2]-1);
         break;
 
       // decrement1 (with mem ind 8 bits)
@@ -638,29 +637,47 @@ public class Processor {
         this.setReg_16bit(PC, this.ir.op2);
         break;
 
+      // halt
       case 75:
         System.out.println("halt");
-        break;
-
-      case 76:
-        System.out.println("end");
         this.end = true;
         System.out.println("Fin del programa");
         break;
 
+      // end
+      case 76:
+        System.out.println("end");
+        this.end = true;
+        
+        break;
+
+      // org
       case 77:
         System.out.println("org");
-//        this.reg_16bit[PC] = this.ir.op2;
         this.setReg_16bit(PC, this.ir.op2);
         break;
 
+      // equ
       case 78:
         System.out.println("equ");
         break;
 
+      // call
       case 79:
+        //TODO: validar SP
+        this.setReg_16bit(SP, this.reg_16bit[PC]);
+        this.setReg_16bit(PC, this.ir.op2);
         System.out.println("call");
         break;
+
+      // ret
+      case 80:
+        this.setReg_16bit(PC, this.reg_16bit[SP]);
+        this.setReg_16bit(SP, 0);
+        System.out.println("ret");
+        break;
+
+
     }
   }
 

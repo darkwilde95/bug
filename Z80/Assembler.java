@@ -80,7 +80,7 @@ public class Assembler {
       if (line.length == 3 || !this.opcodes.contains(line[0])) {
         this.labels.put(line[0], auxPointer);
       }
-      
+
       if (!line[0].equalsIgnoreCase("ORG")){
          auxPointer+=5;
       }
@@ -101,7 +101,6 @@ public class Assembler {
     while((line = b.readLine()) != null) {
       relocate = false;
       if (line.charAt(0) == '#') continue;
-      // System.out.println(line);
       aux = line.split(" ");
       params = null;
       label = null;
@@ -124,6 +123,7 @@ public class Assembler {
       } else {
         opcode = aux[0];
       }
+
       // Inicio
       switch(opcode) {
 
@@ -253,7 +253,7 @@ public class Assembler {
 
             // desde reg
             if (this.reg_8bit.containsKey(params[1])) {
-              
+
               this.ir.opcode = 18;
               this.ir.op2 = this.reg_8bit.get(params[1]);
 
@@ -699,7 +699,27 @@ public class Assembler {
 
         case "CALL":
           //llamada a subrutina
-          this.ir.opcode = 79;
+          //mem
+          if (params[0].contains("(")) {
+            // direccion hex
+            if (params[0].length() == 7) {
+              this.ir.opcode = 79;
+              this.ir.op2 = this.toDec(params[0].substring(1,5));
+            } else {
+              System.err.println("Error en direccion");
+              System.exit(-1);
+            }
+          // etiqueta
+          } else {
+            this.ir.opcode = 79;
+            this.ir.op2 = this.labels.get(params[0]);
+            relocate = true;
+          }
+          break;
+
+        case "RET":
+          // retorno desde una subrutina
+          this.ir.opcode = 80;
           break;
 
         default:
@@ -708,7 +728,7 @@ public class Assembler {
           System.exit(0);
           break;
       }
-
+      if (this.ir.opcode == 76) break;
       longInstruction = this.ir.encodeToLong();
       outLine = String.format("%40s", Long.toBinaryString(longInstruction)).replace(' ', '0');  // Parentesis
       if (relocate) {
@@ -808,6 +828,5 @@ public class Assembler {
 77  org
 78  equ
 79  call
-
-// TODO etiquta org call equ
+80  ret
 */

@@ -21,10 +21,6 @@ class UI {
     l.chargeProgram("relocatableCode.txt", mem);
     Processor z80 = new Processor(mem, this);
     z80.runProgram();
-    
-    for (int i = 0; i < 20; i++) {
-        System.out.println("addr: " + i + "; MEM: " + mem.get(i));            
-    }
   }
   public void printLabel(String s){
       f.print(s);

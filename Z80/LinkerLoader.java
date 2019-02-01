@@ -39,13 +39,7 @@ public class LinkerLoader {
       }
 
     }
-//    System.out.println("\n\nsadadsain[3]: " + m.get(3) + " in[4]: " + m.get(4));
-//    System.out.println("\n\n\nLines = " + lines);
-//    System.out.println("\n\n\nORG = " + this.org);
-    /*
-    for (int i = this.org-5; i < this.org+lines*5+5; i++) {
-      System.out.println(m.get(i));
-    }*/
+
     b.close();
     outfile.close();
   }
@@ -56,7 +50,6 @@ public class LinkerLoader {
     long opcode = (inst & 0x00_00_00_ff_00_00_00_00L) >> 32;
     long op1 = (inst & 0x00_00_00_00_ff_ff_00_00L) >> 16;
     long op2 = (inst & 0x00_00_00_00_00_00_ff_ffL);
-//    System.out.println("op "+opcode+" o1 "+op1+" o2 "+op2);
     IR ir = new IR();
     if (opcode == this.ORG) {
       this.org = (int) op2;
@@ -84,8 +77,6 @@ public class LinkerLoader {
       }
     }
 
-//    System.out.println(Long.toBinaryString(inst));
-
     int[] result = new int[5];
     long filter = 0x00_00_00_00_00_00_00_ff;
     for (int i = 4; i >= 0; i--) {
@@ -93,7 +84,6 @@ public class LinkerLoader {
       filter <<= 8;
     }
 
-    //System.out.println("op" + result[0]);
     return result;
   }
 
