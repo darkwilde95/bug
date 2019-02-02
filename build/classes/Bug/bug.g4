@@ -53,7 +53,7 @@ b_while       : WHILE expression_b NEWLINE
                 END
               ;
 
-b_for         : FOR assignation TO expression_b STEP expression_b NEWLINE
+b_for         : FOR assignation TO expression_a STEP expression_a NEWLINE
                 block
                 END
               ;

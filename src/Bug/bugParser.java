@@ -1154,11 +1154,11 @@ public class bugParser extends Parser {
 			return getRuleContext(AssignationContext.class,0);
 		}
 		public TerminalNode TO() { return getToken(bugParser.TO, 0); }
-		public List<Expression_bContext> expression_b() {
-			return getRuleContexts(Expression_bContext.class);
+		public List<Expression_aContext> expression_a() {
+			return getRuleContexts(Expression_aContext.class);
 		}
-		public Expression_bContext expression_b(int i) {
-			return getRuleContext(Expression_bContext.class,i);
+		public Expression_aContext expression_a(int i) {
+			return getRuleContext(Expression_aContext.class,i);
 		}
 		public TerminalNode STEP() { return getToken(bugParser.STEP, 0); }
 		public TerminalNode NEWLINE() { return getToken(bugParser.NEWLINE, 0); }
@@ -1190,11 +1190,11 @@ public class bugParser extends Parser {
 			setState(142);
 			match(TO);
 			setState(143);
-			expression_b(0);
+			expression_a(0);
 			setState(144);
 			match(STEP);
 			setState(145);
-			expression_b(0);
+			expression_a(0);
 			setState(146);
 			match(NEWLINE);
 			setState(147);
@@ -1283,8 +1283,8 @@ public class bugParser extends Parser {
 		"\u0086\3\2\2\2\u0086\u0087\7\34\2\2\u0087\23\3\2\2\2\u0088\u0089\7\33"+
 		"\2\2\u0089\u008a\5\n\6\2\u008a\u008b\7%\2\2\u008b\u008c\5\4\3\2\u008c"+
 		"\u008d\7\34\2\2\u008d\25\3\2\2\2\u008e\u008f\7\35\2\2\u008f\u0090\5\20"+
-		"\t\2\u0090\u0091\7\37\2\2\u0091\u0092\5\n\6\2\u0092\u0093\7\36\2\2\u0093"+
-		"\u0094\5\n\6\2\u0094\u0095\7%\2\2\u0095\u0096\5\4\3\2\u0096\u0097\7\34"+
+		"\t\2\u0090\u0091\7\37\2\2\u0091\u0092\5\f\7\2\u0092\u0093\7\36\2\2\u0093"+
+		"\u0094\5\f\7\2\u0094\u0095\7%\2\2\u0095\u0096\5\4\3\2\u0096\u0097\7\34"+
 		"\2\2\u0097\27\3\2\2\2\16\35\'/\63FQS_gi~\u0084";
 	public static final ATN _ATN =
 		new ATNDeserializer().deserialize(_serializedATN.toCharArray());

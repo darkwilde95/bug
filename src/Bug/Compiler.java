@@ -26,6 +26,7 @@ public class Compiler extends bugBaseVisitor<Type>{
   private int jp_num = 0;
   private int while_num = 0;
   private int if_num = 0;
+  private int for_num = 0;
   private int elif_num = 0;
   private boolean add_mult = false, add_div = false;
   private PrintWriter outFile;
@@ -36,6 +37,12 @@ public class Compiler extends bugBaseVisitor<Type>{
   public Compiler() throws UnsupportedEncodingException, FileNotFoundException {
     outFile = new PrintWriter("programs/program.assembler", "UTF-8");
     program = new LinkedList();
+  }
+  
+  private void ensure_global(String id) {
+    if (!SymbolsTable.get(id).global) {
+      Errors.notDeclared(id);
+    }
   }
 
   private void ensure_stack(String id) {
@@ -54,12 +61,83 @@ public class Compiler extends bugBaseVisitor<Type>{
 
   private void print(String instruction) {
     program.add(instruction);
-//    System.out.println(instruction);
   }
 
   @Override
   public Type visitB_for(bugParser.B_forContext ctx) {
-    return super.visitB_for(ctx); //To change body of generated methods, choose Tools | Templates.
+    int for_n = for_num++, jp1 = 0, jp2 = 0;
+    Type expr = null;
+    Type var = this.visit(ctx.assignation());
+    if (var.auxType == Type.BOOL) {
+      Errors.isNot(Type.INT);
+    }
+    String id = var.val; 
+    
+    if (ctx.expression_a(0).getChildCount() == 1) {
+      expr = this.visit(ctx.expression_a(0));
+
+      if (expr.isId()) {
+        if (SymbolsTable.containsKey(expr.val)) {
+          if (SymbolsTable.get(expr.val).isInteger()) {
+            print("FOR_" + for_n + " LD B,(" + expr.val + ")");
+          } else {
+            Errors.isNot(Type.INT);
+          }
+        } else {
+          Errors.notDeclared(expr.val);
+        }
+      } else {
+        print("FOR_" + for_n + " LD B," + expr.asInteger());
+      }
+    } else {
+      print("FOR_" + for_n + " NOP");
+      this.visit(ctx.expression_a(0));
+      print("LD B,A");  
+    }
+    jp1 = jp_num++;
+    jp2 = jp_num++;
+    print("LD A,(" + id + ")");
+    print("INC B");
+    print("CP B");
+    print("JP C,JUMP_" + jp1);
+    print("LD A,00H");
+    print("JP JUMP_" + jp2);
+    print("JUMP_" + jp1 + " LD A,01H");
+    print("JUMP_" + jp2 + " NOP");
+    print("CP 00H");
+    print("JP Z,END_FOR_" + for_n);
+    
+    this.visit(ctx.block());
+    
+    if (ctx.expression_a(1).getChildCount() == 1) {
+      expr = this.visit(ctx.expression_a(1));
+      if (expr.isId()) {
+        if (SymbolsTable.containsKey(expr.val)) {
+          if (SymbolsTable.get(expr.val).isInteger()) {
+            print("LD A,(" + id + ")");
+            print("ADD A,(" + expr.val + ")");
+          } else {
+            Errors.isNot(Type.INT);
+          }
+        } else {
+          Errors.notDeclared(expr.val);
+        }
+      } else {
+        print("LD A,(" + id + ")");
+        print("ADD A," + expr.asInteger());
+      }
+    } else {
+      print("ADD A,(" + id + ")");
+    }
+    print("LD (" + id + "),A");
+    print("JP FOR_" + for_n);
+    print("END_FOR_" + for_n + " NOP");
+    
+    var = SymbolsTable.get(id);
+    var.global = false;
+    SymbolsTable.put(id, var);   
+    
+    return null;
   }
 
   @Override
@@ -68,9 +146,10 @@ public class Compiler extends bugBaseVisitor<Type>{
     Type expr = null;
     if (ctx.expression_b().getChildCount() == 1) {
       expr = this.visit(ctx.expression_b());
-      
+
       if (expr.isId()) {
         if (SymbolsTable.containsKey(expr.val)) {
+          ensure_global(expr.val);
           if (SymbolsTable.get(expr.val).isBoolean()) {
             print("WHILE_" + wh + " LD A,(" + expr.val + ")");
             print("CP 00H");
@@ -106,11 +185,12 @@ public class Compiler extends bugBaseVisitor<Type>{
     boolean els = ctx.ELSE() != null;
     Type expr_aux = null;
 
-    
+
     if (ctx.expression_b(0).getChildCount() == 1) {
-      expr_aux = this.visit(ctx.expression_b(0));  
+      expr_aux = this.visit(ctx.expression_b(0));
       if (expr_aux.isId()) {
         if (SymbolsTable.containsKey(expr_aux.val)) {
+          ensure_global(expr_aux.val);
           if (SymbolsTable.get(expr_aux.val).isBoolean()) {
             print("IF_" + if_n + " LD A,(" + expr_aux.val + ")");
             print("CP 00H");
@@ -129,19 +209,20 @@ public class Compiler extends bugBaseVisitor<Type>{
       this.visit(ctx.expression_b(0));
       print("CP 00H");
     }
-    
+
     if (expr.size() > 1) {
       elif_n = elif_num++;
       print("JP Z,ELIF_" + elif_n);
       this.visit(ctx.block(0));
       print("JP END_IF_" + if_n);
-      
+
       for (int i = 1; i < expr.size()-1; i++) {
-        
+
         if (ctx.expression_b(i).getChildCount() == 1) {
-          expr_aux = this.visit(ctx.expression_b(i));  
+          expr_aux = this.visit(ctx.expression_b(i));
           if (expr_aux.isId()) {
             if (SymbolsTable.containsKey(expr_aux.val)) {
+              ensure_global(expr_aux.val);
               if (SymbolsTable.get(expr_aux.val).isBoolean()) {
                 print("ELIF_" + elif_n + " LD A,(" + expr_aux.val + ")");
                 print("CP 00H");
@@ -159,17 +240,18 @@ public class Compiler extends bugBaseVisitor<Type>{
           print("ELIF_" + elif_n + " NOP");
           this.visit(ctx.expression_b(i));
           print("CP 00H");
-        }       
+        }
 
         elif_n = elif_num++;
-        print("JP Z,ELIF_" + elif_n);        
+        print("JP Z,ELIF_" + elif_n);
         this.visit(ctx.block(i));
         print("JP END_IF_" + if_n);
       }
       if (ctx.expression_b(expr.size()-1).getChildCount() == 1) {
-          expr_aux = this.visit(ctx.expression_b(expr.size()-1));  
+          expr_aux = this.visit(ctx.expression_b(expr.size()-1));
           if (expr_aux.isId()) {
             if (SymbolsTable.containsKey(expr_aux.val)) {
+              ensure_global(expr_aux.val);
               if (SymbolsTable.get(expr_aux.val).isBoolean()) {
                 print("ELIF_" + elif_n + " LD A,(" + expr_aux.val + ")");
                 print("CP 00H");
@@ -188,9 +270,9 @@ public class Compiler extends bugBaseVisitor<Type>{
           this.visit(ctx.expression_b(expr.size()-1));
           print("CP 00H");
         }
-      
+
       if (els) {
-        print("JP Z,ELSE_" + if_n);   
+        print("JP Z,ELSE_" + if_n);
         this.visit(ctx.block(blocks.size()-2));
         print("JP END_IF_" + if_n);
         print("ELSE_" + if_n + " NOP");
@@ -212,7 +294,7 @@ public class Compiler extends bugBaseVisitor<Type>{
       }
     }
     print("END_IF_" + if_n + " NOP");
-    
+
     return null;
   }
 
@@ -256,7 +338,7 @@ public class Compiler extends bugBaseVisitor<Type>{
         break;
     }
 
-    return new Type(Type.NONE);
+    return new Type(Type.ID, SymbolsTable.get(left).type, left);
   }
 
   @Override
@@ -264,6 +346,7 @@ public class Compiler extends bugBaseVisitor<Type>{
     Type op = this.visit(ctx.expression());
     if (op.isId()) {
       if (SymbolsTable.containsKey(op.val)) {
+        ensure_global(op.val);
         print("LD A,(" + op.val + ")");
       } else {
         Errors.notDeclared(op.val);
@@ -292,7 +375,7 @@ public class Compiler extends bugBaseVisitor<Type>{
       print("LD (" + id + "),A");
     }
     right = this.visit(ctx.expression_a(1));
-    
+
     // EXPR en IZQ y DER
     if (left.type == Type.EXPR && right.type == Type.EXPR) {
       if (left.auxType == right.auxType) {
@@ -316,6 +399,7 @@ public class Compiler extends bugBaseVisitor<Type>{
       if (left.type == Type.EXPR) {
         if (right.type == Type.ID) {
           if (SymbolsTable.containsKey(right.val)) {
+            ensure_global(right.val);
             if (SymbolsTable.get(right.val).type == left.auxType) {
               if (SymbolsTable.get(right.val).type == Type.INT) {
                 print("LD Ac,00H");
@@ -348,10 +432,11 @@ public class Compiler extends bugBaseVisitor<Type>{
       // EXPR en derecha
         if (left.type == Type.ID) {
           if (SymbolsTable.containsKey(left.val)) {
+            ensure_global(left.val);
             if (SymbolsTable.get(left.val).type == right.auxType) {
               if (SymbolsTable.get(left.val).type == Type.INT) {
                 print("LD Ac,00H");
-                print("LD D,(" + left.val + ")");               
+                print("LD D,(" + left.val + ")");
                 print("LD E,A");
                 print(op ? "CALL MULT" : "CALL DIV");
                 print("LD A,Ac");
@@ -366,7 +451,7 @@ public class Compiler extends bugBaseVisitor<Type>{
         } else {
           if (left.type == Type.INT) {
             print("LD Ac,00H");
-            print("LD D," + left.asInteger());               
+            print("LD D," + left.asInteger());
             print("LD E,A");
             print(op ? "CALL MULT" : "CALL DIV");
             print("LD A,Ac");
@@ -379,19 +464,20 @@ public class Compiler extends bugBaseVisitor<Type>{
     } else {
       // HOJAS
       if (left.type == Type.INT && right.type == Type.INT) {
-        print("LD Ac,00H"); 
+        print("LD Ac,00H");
         print("LD D," + left.asInteger());
-        print("LD E," + right.asInteger()); 
+        print("LD E," + right.asInteger());
         print(op ? "CALL MULT" : "CALL DIV");
         print("LD A,Ac");
         return new Type(Type.EXPR, Type.INT, null);
 
       } else if (left.type == Type.INT && right.type == Type.ID) {
         if (SymbolsTable.containsKey(right.val)) {
+          ensure_global(right.val);
           if (SymbolsTable.get(right.val).type == Type.INT) {
             print("LD Ac,00H");
             print("LD D," + left.asInteger());
-            print("LD E,(" + right.val + ")");   
+            print("LD E,(" + right.val + ")");
             print(op ? "CALL MULT" : "CALL DIV");
             print("LD A,Ac");
             return new Type(Type.EXPR, Type.INT, null);
@@ -404,6 +490,7 @@ public class Compiler extends bugBaseVisitor<Type>{
 
       } else if (left.type == Type.ID && right.type == Type.INT) {
         if (SymbolsTable.containsKey(left.val)) {
+          ensure_global(left.val);
           if (SymbolsTable.get(left.val).type == Type.INT) {
             print("LD Ac,00H");
             print("LD D,(" + left.val + ")");
@@ -420,7 +507,9 @@ public class Compiler extends bugBaseVisitor<Type>{
 
       } else if (left.type == Type.ID && right.type == Type.ID) {
         if (SymbolsTable.containsKey(left.val)) {
+          ensure_global(left.val);
           if (SymbolsTable.containsKey(right.val)) {
+            ensure_global(right.val);
             if (SymbolsTable.get(left.val).type == SymbolsTable.get(right.val).type) {
               if (SymbolsTable.get(left.val).type == Type.INT) {
                 print("LD Ac,00H");
@@ -492,6 +581,7 @@ public class Compiler extends bugBaseVisitor<Type>{
       if (left.type == Type.EXPR) {
         if (right.type == Type.ID) {
           if (SymbolsTable.containsKey(right.val)) {
+            ensure_global(right.val);
             if (SymbolsTable.get(right.val).type == left.auxType) {
               if (SymbolsTable.get(right.val).type == Type.INT) {
                 if (op) {
@@ -524,6 +614,7 @@ public class Compiler extends bugBaseVisitor<Type>{
       // EXPR en derecha
         if (left.type == Type.ID) {
           if (SymbolsTable.containsKey(left.val)) {
+            ensure_global(left.val);
             if (SymbolsTable.get(left.val).type == right.auxType) {
               if (SymbolsTable.get(left.val).type == Type.INT) {
                 if (op) {
@@ -570,6 +661,7 @@ public class Compiler extends bugBaseVisitor<Type>{
 
       } else if (left.type == Type.INT && right.type == Type.ID) {
         if (SymbolsTable.containsKey(right.val)) {
+          ensure_global(right.val);
           if (SymbolsTable.get(right.val).type == Type.INT) {
              print("LD A," + left.asInteger());
             if (op) {
@@ -588,6 +680,7 @@ public class Compiler extends bugBaseVisitor<Type>{
 
       } else if (left.type == Type.ID && right.type == Type.INT) {
         if (SymbolsTable.containsKey(left.val)) {
+          ensure_global(left.val);
           if (SymbolsTable.get(left.val).type == Type.INT) {
              print("LD A,(" + left.val + ")");
             if (op) {
@@ -606,7 +699,9 @@ public class Compiler extends bugBaseVisitor<Type>{
 
       } else if (left.type == Type.ID && right.type == Type.ID) {
         if (SymbolsTable.containsKey(left.val)) {
+          ensure_global(left.val);
           if (SymbolsTable.containsKey(right.val)) {
+            ensure_global(right.val);
             if (SymbolsTable.get(left.val).type == SymbolsTable.get(right.val).type) {
               if (SymbolsTable.get(left.val).type == Type.INT) {
                  print("LD A,(" + left.val + ")");
@@ -644,6 +739,7 @@ public class Compiler extends bugBaseVisitor<Type>{
       return new Type(Type.EXPR, Type.INT, null);
     } else if (op.type == Type.ID) {
       if (SymbolsTable.containsKey(op.val)) {
+        ensure_global(op.val);
         if (SymbolsTable.get(op.val).type == Type.INT) {
           print("LD A,(" + op.val + ")");
           print("NEG");
@@ -688,7 +784,7 @@ public class Compiler extends bugBaseVisitor<Type>{
       this.ensure_stack(id);
       print("LD (" + id + "),A");
     }
-    
+
     right = this.visit(ctx.expression_a(1));
     if (right.type == Type.EXPR && (op == bugParser.GT || op == bugParser.LT)) {
       id = Integer.toString(used.size());
@@ -696,7 +792,7 @@ public class Compiler extends bugBaseVisitor<Type>{
       this.ensure_stack(id);
       print("LD (" + id + "),A");
     }
-    
+
     // EXPR en IZQ y DER
     if (left.type == Type.EXPR && right.type == Type.EXPR) {
       if (left.auxType == right.auxType) {
@@ -762,7 +858,7 @@ public class Compiler extends bugBaseVisitor<Type>{
               print("JUMP_" + jp2 + " NOP");
               break;
           }
-          
+
           return new Type(Type.EXPR, Type.BOOL);
         } else {
           Errors.operationNotSupported(left.auxType, right.auxType, ctx.op.getText());
@@ -776,6 +872,7 @@ public class Compiler extends bugBaseVisitor<Type>{
       if (left.type == Type.EXPR) {
         if (right.type == Type.ID) {
           if (SymbolsTable.containsKey(right.val)) {
+            ensure_global(right.val);
             if (SymbolsTable.get(right.val).type == left.auxType) {
               if (SymbolsTable.get(right.val).type == Type.INT) {
                 switch(op) {
@@ -829,7 +926,7 @@ public class Compiler extends bugBaseVisitor<Type>{
                     print("JUMP_" + jp2 + " NOP");
                     break;
                 }
-                
+
                 return new Type(Type.EXPR, Type.BOOL);
               } else {
                 Errors.areNot(Type.INT);
@@ -891,7 +988,7 @@ public class Compiler extends bugBaseVisitor<Type>{
                 print("JUMP_" + jp2 + " NOP");
                 break;
             }
-            
+
             return new Type(Type.EXPR, Type.BOOL);
           } else {
             Errors.incompatibleTypes(left.auxType, right.type, ctx.op.getText());
@@ -902,6 +999,7 @@ public class Compiler extends bugBaseVisitor<Type>{
       // EXPR en derecha
         if (left.type == Type.ID) {
           if (SymbolsTable.containsKey(left.val)) {
+            ensure_global(left.val);
             if (SymbolsTable.get(left.val).type == right.auxType) {
               if (SymbolsTable.get(left.val).type == Type.INT) {
                 switch(op) {
@@ -961,7 +1059,7 @@ public class Compiler extends bugBaseVisitor<Type>{
                     print("JUMP_" + jp2 + " NOP");
                     break;
                 }
-                
+
                 return new Type(Type.EXPR, Type.BOOL);
               } else {
                 Errors.areNot(Type.INT);
@@ -1095,6 +1193,7 @@ public class Compiler extends bugBaseVisitor<Type>{
 
       } else if (left.type == Type.INT && right.type == Type.ID) {
         if (SymbolsTable.containsKey(right.val)) {
+          ensure_global(right.val);
           if (SymbolsTable.get(right.val).type == Type.INT) {
             print("LD A," + left.asInteger());
             switch(op) {
@@ -1159,6 +1258,7 @@ public class Compiler extends bugBaseVisitor<Type>{
 
       } else if (left.type == Type.ID && right.type == Type.INT) {
         if (SymbolsTable.containsKey(left.val)) {
+          ensure_global(left.val);
           if (SymbolsTable.get(left.val).type == Type.INT) {
             print("LD A,(" + left.val + ")");
             switch(op) {
@@ -1223,7 +1323,9 @@ public class Compiler extends bugBaseVisitor<Type>{
 
       } else if (left.type == Type.ID && right.type == Type.ID) {
         if (SymbolsTable.containsKey(left.val)) {
+          ensure_global(left.val);
           if (SymbolsTable.containsKey(right.val)) {
+            ensure_global(right.val);
             if (SymbolsTable.get(left.val).type == SymbolsTable.get(right.val).type) {
               if (SymbolsTable.get(left.val).type == Type.INT) {
                 print("LD A,(" + left.val + ")");
@@ -1329,6 +1431,7 @@ public class Compiler extends bugBaseVisitor<Type>{
       if (left.type == Type.EXPR) {
         if (right.type == Type.ID) {
           if (SymbolsTable.containsKey(right.val)) {
+            ensure_global(right.val);
             if (SymbolsTable.get(right.val).type == left.auxType) {
               if (SymbolsTable.get(right.val).type == Type.BOOL) {
                 print("AND (" + right.val + ")");
@@ -1353,6 +1456,7 @@ public class Compiler extends bugBaseVisitor<Type>{
       // EXPR en derecha
         if (left.type == Type.ID) {
           if (SymbolsTable.containsKey(left.val)) {
+            ensure_global(left.val);
             if (SymbolsTable.get(left.val).type == right.auxType) {
               if (SymbolsTable.get(left.val).type == Type.BOOL) {
                 print("AND (" + left.val + ")");
@@ -1382,6 +1486,7 @@ public class Compiler extends bugBaseVisitor<Type>{
 
       } else if (left.type == Type.BOOL && right.type == Type.ID) {
         if (SymbolsTable.containsKey(right.val)) {
+          ensure_global(right.val);
           if (SymbolsTable.get(right.val).type == Type.BOOL) {
             print("LD A," + left.asBoolean());
             print("AND (" + right.val + ")");
@@ -1395,6 +1500,7 @@ public class Compiler extends bugBaseVisitor<Type>{
 
       } else if (left.type == Type.ID && right.type == Type.BOOL) {
         if (SymbolsTable.containsKey(left.val)) {
+          ensure_global(left.val);
           if (SymbolsTable.get(left.val).type == Type.BOOL) {
             print("LD A,(" + left.val + ")");
             print("AND " + right.asBoolean());
@@ -1408,7 +1514,9 @@ public class Compiler extends bugBaseVisitor<Type>{
 
       } else if (left.type == Type.ID && right.type == Type.ID) {
         if (SymbolsTable.containsKey(left.val)) {
+          ensure_global(left.val);
           if (SymbolsTable.containsKey(right.val)) {
+            ensure_global(right.val);
             if (SymbolsTable.get(left.val).type == SymbolsTable.get(right.val).type) {
               if (SymbolsTable.get(left.val).type == Type.BOOL) {
                 print("LD A,(" + left.val + ")");
@@ -1463,6 +1571,7 @@ public class Compiler extends bugBaseVisitor<Type>{
       if (left.type == Type.EXPR) {
         if (right.type == Type.ID) {
           if (SymbolsTable.containsKey(right.val)) {
+            ensure_global(right.val);
             if (SymbolsTable.get(right.val).type == left.auxType) {
               if (SymbolsTable.get(right.val).type == Type.BOOL) {
                 print("OR (" + right.val + ")");
@@ -1487,6 +1596,7 @@ public class Compiler extends bugBaseVisitor<Type>{
       // EXPR en derecha
         if (left.type == Type.ID) {
           if (SymbolsTable.containsKey(left.val)) {
+            ensure_global(left.val);
             if (SymbolsTable.get(left.val).type == right.auxType) {
               if (SymbolsTable.get(left.val).type == Type.BOOL) {
                 print("OR (" + left.val + ")");
@@ -1516,6 +1626,7 @@ public class Compiler extends bugBaseVisitor<Type>{
 
       } else if (left.type == Type.BOOL && right.type == Type.ID) {
         if (SymbolsTable.containsKey(right.val)) {
+          ensure_global(right.val);
           if (SymbolsTable.get(right.val).type == Type.BOOL) {
             print("LD A," + left.asBoolean());
             print("OR (" + right.val + ")");
@@ -1529,6 +1640,7 @@ public class Compiler extends bugBaseVisitor<Type>{
 
       } else if (left.type == Type.ID && right.type == Type.BOOL) {
         if (SymbolsTable.containsKey(left.val)) {
+          ensure_global(left.val);
           if (SymbolsTable.get(left.val).type == Type.BOOL) {
             print("LD A,(" + left.val + ")");
             print("OR " + right.asBoolean());
@@ -1542,7 +1654,9 @@ public class Compiler extends bugBaseVisitor<Type>{
 
       } else if (left.type == Type.ID && right.type == Type.ID) {
         if (SymbolsTable.containsKey(left.val)) {
+          ensure_global(left.val);
           if (SymbolsTable.containsKey(right.val)) {
+            ensure_global(right.val);
             if (SymbolsTable.get(left.val).type == SymbolsTable.get(right.val).type) {
               if (SymbolsTable.get(left.val).type == Type.BOOL) {
                 print("LD A,(" + left.val + ")");
@@ -1584,7 +1698,7 @@ public class Compiler extends bugBaseVisitor<Type>{
       print("LD (" + id + "),A");
     }
     right = this.visit(ctx.expression_b(1));
-    
+
     // EXPR en IZQ y DER
     if (left.type == Type.EXPR && right.type == Type.EXPR) {
       if (left.auxType == right.auxType) {
@@ -1611,6 +1725,7 @@ public class Compiler extends bugBaseVisitor<Type>{
       if (left.type == Type.EXPR) {
         if (right.type == Type.ID) {
           if (SymbolsTable.containsKey(right.val)) {
+            ensure_global(right.val);
             if (SymbolsTable.get(right.val).type == left.auxType) {
               if (SymbolsTable.get(right.val).type == Type.BOOL) {
                 jp1 = jp_num++;
@@ -1649,6 +1764,7 @@ public class Compiler extends bugBaseVisitor<Type>{
       // EXPR en derecha
         if (left.type == Type.ID) {
           if (SymbolsTable.containsKey(left.val)) {
+            ensure_global(left.val);
             if (SymbolsTable.get(left.val).type == right.auxType) {
               if (SymbolsTable.get(left.val).type == Type.BOOL) {
                 jp1 = jp_num++;
@@ -1699,6 +1815,7 @@ public class Compiler extends bugBaseVisitor<Type>{
 
       } else if (left.type == Type.BOOL && right.type == Type.ID) {
         if (SymbolsTable.containsKey(right.val)) {
+          ensure_global(right.val);
           if (SymbolsTable.get(right.val).type == Type.BOOL) {
             jp1 = jp_num++;
             jp2 = jp_num++;
@@ -1720,6 +1837,7 @@ public class Compiler extends bugBaseVisitor<Type>{
 
       } else if (left.type == Type.ID && right.type == Type.BOOL) {
         if (SymbolsTable.containsKey(left.val)) {
+          ensure_global(left.val);
           if (SymbolsTable.get(left.val).type == Type.BOOL) {
             jp1 = jp_num++;
             jp2 = jp_num++;
@@ -1741,7 +1859,9 @@ public class Compiler extends bugBaseVisitor<Type>{
 
       } else if (left.type == Type.ID && right.type == Type.ID) {
         if (SymbolsTable.containsKey(left.val)) {
+          ensure_global(left.val);
           if (SymbolsTable.containsKey(right.val)) {
+            ensure_global(right.val);
             if (SymbolsTable.get(left.val).type == SymbolsTable.get(right.val).type) {
               if (SymbolsTable.get(left.val).type == Type.BOOL) {
                 jp1 = jp_num++;
@@ -1771,7 +1891,7 @@ public class Compiler extends bugBaseVisitor<Type>{
     }
     return new Type(Type.NONE);
   }
-  
+
   @Override
   public Type visitEqNeqExpr_a(bugParser.EqNeqExpr_aContext ctx) {
     boolean op = ctx.op.getType() == bugParser.EQ;
@@ -1786,7 +1906,7 @@ public class Compiler extends bugBaseVisitor<Type>{
       print("LD (" + id + "),A");
     }
     right = this.visit(ctx.expression_a(1));
-    
+
     // EXPR en IZQ y DER
     if (left.type == Type.EXPR && right.type == Type.EXPR) {
       if (left.auxType == right.auxType) {
@@ -1813,6 +1933,7 @@ public class Compiler extends bugBaseVisitor<Type>{
       if (left.type == Type.EXPR) {
         if (right.type == Type.ID) {
           if (SymbolsTable.containsKey(right.val)) {
+            ensure_global(right.val);
             if (SymbolsTable.get(right.val).type == left.auxType) {
               if (SymbolsTable.get(right.val).type == Type.INT) {
                 jp1 = jp_num++;
@@ -1851,6 +1972,7 @@ public class Compiler extends bugBaseVisitor<Type>{
       // EXPR en derecha
         if (left.type == Type.ID) {
           if (SymbolsTable.containsKey(left.val)) {
+            ensure_global(left.val);
             if (SymbolsTable.get(left.val).type == right.auxType) {
               if (SymbolsTable.get(left.val).type == Type.INT) {
                 jp1 = jp_num++;
@@ -1885,7 +2007,7 @@ public class Compiler extends bugBaseVisitor<Type>{
           }
         }
       }
-    } else {  
+    } else {
       // HOJAS
       if (left.type == Type.INT && right.type == Type.INT) {
         jp1 = jp_num++;
@@ -1901,6 +2023,7 @@ public class Compiler extends bugBaseVisitor<Type>{
 
       } else if (left.type == Type.INT && right.type == Type.ID) {
         if (SymbolsTable.containsKey(right.val)) {
+          ensure_global(right.val);
           if (SymbolsTable.get(right.val).type == Type.INT) {
             jp1 = jp_num++;
             jp2 = jp_num++;
@@ -1922,6 +2045,7 @@ public class Compiler extends bugBaseVisitor<Type>{
 
       } else if (left.type == Type.ID && right.type == Type.INT) {
         if (SymbolsTable.containsKey(left.val)) {
+          ensure_global(left.val);
           if (SymbolsTable.get(left.val).type == Type.INT) {
             jp1 = jp_num++;
             jp2 = jp_num++;
@@ -1943,7 +2067,9 @@ public class Compiler extends bugBaseVisitor<Type>{
 
       } else if (left.type == Type.ID && right.type == Type.ID) {
         if (SymbolsTable.containsKey(left.val)) {
+          ensure_global(left.val);
           if (SymbolsTable.containsKey(right.val)) {
+            ensure_global(right.val);
             if (SymbolsTable.get(left.val).type == SymbolsTable.get(right.val).type) {
               jp1 = jp_num++;
               jp2 = jp_num++;
@@ -1986,6 +2112,7 @@ public class Compiler extends bugBaseVisitor<Type>{
       return new Type(Type.EXPR, Type.BOOL, null);
     } else if (op.type == Type.ID) {
       if (SymbolsTable.containsKey(op.val)) {
+        ensure_global(op.val);
         if (SymbolsTable.get(op.val).type == Type.BOOL) {
           print("LD A,(" + op.val + ")");
           print("XOR 01H");

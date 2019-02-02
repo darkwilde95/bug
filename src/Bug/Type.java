@@ -12,30 +12,41 @@ public class Type {
   public int type;
   public int auxType;
   public String val;
-  public static final Type noneObject = new Type(Type.NONE, "none");
+  public boolean global;
   
   public Type(int type) {
     this.auxType = -1;
     this.val = null;
     this.type = type;
+    this.global = true;
   }
 
   public Type(int type, String val) {
     this.type = type;
     this.val = val;
     this.auxType = -1;
+    this.global = true;
   }
 
   public Type(int type, int auxType, String val) {
     this.type = type;
     this.val = val;
     this.auxType = auxType;
+    this.global = true;
   }
   
-    public Type(int type, int auxType) {
+  public Type(int type, int auxType) {
     this.type = type;
     this.val = null;
     this.auxType = auxType;
+    this.global = true;
+  }
+  
+  public Type(int type, int auxType, String val, boolean global) {
+    this.type = type;
+    this.val = val;
+    this.auxType = auxType;
+    this.global = global;
   }
 
   public boolean isBoolean() {
