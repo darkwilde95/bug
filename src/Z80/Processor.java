@@ -126,14 +126,12 @@ public class Processor {
     switch (this.ir.opcode) {
       // add (with reg 8 bits) accum->op1
       case 0:
-        System.out.println("suma");
         res = ALU.add(this.reg_8bit[A], this.reg_8bit[this.ir.op2]);
         this.setReg_8bit(A,res);
         break;
 
       // add (with mem ind) accum
       case 1:
-        System.out.println("suma");
         addr = this.reg_8bit[this.ir.op1] << 8;
         addr |= this.reg_8bit[this.ir.op2];
         res = ALU.add(this.reg_8bit[A], this.mem.get(addr));
@@ -142,14 +140,12 @@ public class Processor {
 
       // add (with mem dir) accum
       case 2:
-        System.out.println("suma");
         res = ALU.add(this.reg_8bit[A], this.mem.get(this.ir.op2));
         this.setReg_8bit(A,res);
         break;
 
       //add (with num 8 bits) accum
       case 3:
-        System.out.println("suma");
         res = ALU.add(this.reg_8bit[A], this.ir.op2);
         this.setReg_8bit(A,res);
         //this.reg_8bit[A] = res;
@@ -157,7 +153,6 @@ public class Processor {
 
       // sub (with reg 8 bits) accum
       case 4:
-        System.out.println("resta");
         res = ALU.sub(this.reg_8bit[A], this.reg_8bit[this.ir.op2]);
         this.setReg_8bit(A,res);
         //this.reg_8bit[A] = res;
@@ -165,7 +160,6 @@ public class Processor {
 
       // sub (with num 8 bits) accum
       case 5:
-        System.out.println("resta");
         addr = this.reg_8bit[this.ir.op1] << 8;
         addr |= this.reg_8bit[this.ir.op2];
         res = ALU.sub(this.reg_8bit[A], this.mem.get(addr));
@@ -175,14 +169,12 @@ public class Processor {
 
       // sub (with mem 8 bits) accum
       case 6:
-        System.out.println("resta");
         res = ALU.sub(this.reg_8bit[A], this.mem.get(this.ir.op2));
         this.setReg_8bit(A,res);
         break;
 
       // sub (with mem 8 bits) accum
       case 7:
-        System.out.println("resta");
         res = ALU.sub(this.reg_8bit[A], this.ir.op2);
         this.setReg_8bit(A,res);
         //this.reg_8bit[A] = res;
@@ -190,19 +182,16 @@ public class Processor {
 
       // increment1 (with reg 8 bits)-> op2
       case 8:
-        System.out.println("incremento");
         this.setReg_8bit(this.ir.op2, this.reg_8bit[this.ir.op2]+1);
         break;
 
       // increment1 (with reg 16 bits)
       case 9:
-        System.out.println("incremento");
         this.setReg_16bit(this.ir.op2, this.reg_16bit[this.ir.op2]+1);
         break;
 
       // increment1 (with mem ind 8 bits)
       case 10:
-        System.out.println("incremento");
         addr = this.reg_8bit[this.ir.op1] << 8;
         addr |= this.reg_8bit[this.ir.op2];
         this.setMem(addr, this.mem.get(addr)+1);
@@ -211,26 +200,22 @@ public class Processor {
 
       // increment1 (with mem dir 8 bits)
       case 11:
-        System.out.println("incremento");
         this.setMem(this.ir.op2, this.mem.get(this.ir.op2)+1);
         res = this.mem.get(this.ir.op2);
         break;
 
       // decrement1 (with reg 8 bits)
       case 12:
-        System.out.println("decremento");
         this.setReg_8bit(this.ir.op2, this.reg_8bit[this.ir.op2]-1);
         break;
 
       // decrement1 (with reg 16 bits)
       case 13:
-        System.out.println("decremento");
         this.setReg_16bit(this.ir.op2, this.reg_16bit[this.ir.op2]-1);
         break;
 
       // decrement1 (with mem ind 8 bits)
       case 14:
-        System.out.println("incremento");
         addr = this.reg_8bit[this.ir.op1] << 8;
         addr |= this.reg_8bit[this.ir.op2];
         this.setMem(addr, this.mem.get(addr)-1);
@@ -239,21 +224,18 @@ public class Processor {
 
       // decrement1 (with mem dir 8 bits)
       case 15:
-        System.out.println("incremento");
         this.setMem(this.ir.op2, this.mem.get(this.ir.op2)-1);
         res = this.mem.get(this.ir.op2);
         break;
 
       // complement1 (only acc)
       case 16:
-        System.out.println("complemento 1");
         res = ALU.complement1(this.reg_8bit[A]);
         this.reg_8bit[A] = res;
         break;
 
       // complement2 (only acc)
       case 17:
-        System.out.println("complemento2");
         res = ALU.complement2(this.reg_8bit[A]);
         this.setReg_8bit(A,res);
         //this.reg_8bit[A] = res;
@@ -261,13 +243,11 @@ public class Processor {
 
       // load reg 8 - reg 8
       case 18:
-        System.out.println("load");
         this.setReg_8bit(this.ir.op1, this.reg_8bit[this.ir.op2]);
         break;
 
       // load reg 8 - mem ind 8
       case 19:
-        System.out.println("load");
         addr = this.reg_8bit[(0x00_00_ff_00 & this.ir.op2) >>> 8] << 8;
         addr |= this.reg_8bit[0x00_00_00_ff & this.ir.op2];
         this.setReg_8bit(this.ir.op1, this.mem.get(addr));
@@ -275,31 +255,26 @@ public class Processor {
 
       //load (with reg 8 - mem dir)
       case 20:
-        System.out.println("load");
         this.setReg_8bit(this.ir.op1, this.mem.get(this.ir.op2));
         break;
 
       //load (with reg 8 - num 8)
       case 21:
-        System.out.println("load");
         this.setReg_8bit(this.ir.op1, this.ir.op2);
         break;
 
       //load (with reg 16 - reg 16)
       case 22:
-        System.out.println("load");
         this.setReg_16bit(this.ir.op1, this.reg_16bit[this.ir.op2]);
         break;
 
       //load (with reg 16 - num )
       case 23:
-        System.out.println("load");
         this.setReg_8bit(this.ir.op1, this.ir.op2);
         break;
 
       //load (with reg 16 - 2 reg 8 )
       case 24:
-        System.out.println("load");
         addr = this.reg_8bit[(0x00_00_ff_00 & this.ir.op2) >>> 8] << 8;
         addr |= this.reg_8bit[0x00_00_00_ff & this.ir.op2];
         this.setReg_16bit(this.ir.op1, addr);
@@ -307,7 +282,6 @@ public class Processor {
 
       // load (with 2 reg 8 - reg 16)
       case 25:
-        System.out.println("load");
         aux = this.reg_16bit[this.ir.op2];
         addr = (0x00_00_ff_00 & this.ir.op1) >>> 8;
         this.setReg_8bit(addr, (0x00_00_ff_00 & aux >>> 8));
@@ -317,7 +291,6 @@ public class Processor {
 
       //load (with mem ind 8 - reg 8)
       case 26:
-        System.out.println("load");
         addr = this.reg_8bit[(0x00_00_ff_00 & this.ir.op1) >>> 8] << 8;
         addr |= this.reg_8bit[0x00_00_00_ff & this.ir.op1];
         this.setMem(addr, this.reg_8bit[this.ir.op2]);
@@ -325,7 +298,6 @@ public class Processor {
 
       // load (with mem ind 8 - mem ind 8)
       case 27:
-        System.out.println("load");
         addr = this.reg_8bit[(0x00_00_ff_00 & this.ir.op1) >>> 8] << 8;
         addr |= this.reg_8bit[0x00_00_00_ff & this.ir.op1];
         aux = this.reg_8bit[(0x00_00_ff_00 & this.ir.op2) >>> 8] << 8;
@@ -335,7 +307,6 @@ public class Processor {
 
       //load (with mem ind 8 - mem dir 8)
       case 28:
-        System.out.println("load");
         addr = this.reg_8bit[(0x00_00_ff_00 & this.ir.op1) >>> 8] << 8;
         addr |= this.reg_8bit[0x00_00_00_ff & this.ir.op1];
         this.setMem(addr, this.mem.get(this.ir.op2));
@@ -343,7 +314,6 @@ public class Processor {
 
       // load (with mem ind 8 - num 8)
       case 29:
-        System.out.println("load");
         addr = this.reg_8bit[(0x00_00_ff_00 & this.ir.op1) >>> 8] << 8;
         addr |= this.reg_8bit[0x00_00_00_ff & this.ir.op1];
         this.setMem(addr, this.ir.op2);
@@ -351,13 +321,11 @@ public class Processor {
 
       //load (with mem dir 8 - reg 8)
       case 30:
-        System.out.println("load");
         this.setMem(this.ir.op1,  this.reg_8bit[this.ir.op2]);
         break;
 
       // load (with mem dir 8 - mem ind 8)
       case 31:
-        System.out.println("load");
         addr = this.reg_8bit[(0x00_00_ff_00 & this.ir.op2) >>> 8] << 8;
         addr |= this.reg_8bit[0x00_00_00_ff & this.ir.op2];
         this.setMem(this.ir.op1, this.mem.get(addr));
@@ -365,26 +333,22 @@ public class Processor {
 
       //load (with mem dir 8 - mem dir 8)
       case 32:
-        System.out.println("load");
         this.setMem(this.ir.op1, this.mem.get(this.ir.op2));
         break;
 
       // load (with mem dir 8 - num 8)
       case 33:
-        System.out.println("load");
         this.setMem(this.ir.op1, this.ir.op2);
         break;
 
       //Input (only acc)
       case 34:
-        System.out.println("input");
         this.setReg_8bit(A,this.chip.getDatabus());
         //this.reg_8bit[A] = this.chip.getDatabus();
         break;
 
       // Output (only acc)
       case 35:
-        System.out.println("output");
         //output = Integer.toBinaryString(this.reg_8bit[A]);
         System.out.print("Bin: ");
         output =  String.format("%8s", Integer.toBinaryString(this.reg_8bit[A])).replace(' ', '0');
@@ -394,14 +358,12 @@ public class Processor {
 
       //  AND (with reg 8 bits) acc
       case 36:
-        System.out.println("and");
         res = ALU.and(this.reg_8bit[A], this.reg_8bit[this.ir.op2]);
         this.reg_8bit[A] = res;
         break;
 
       // AND (with mem ind  8 bits) acc
       case 37:
-        System.out.println("and");
         addr = this.reg_8bit[(0x00_00_ff_00 & this.ir.op2) >>> 8] << 8;
         addr |= this.reg_8bit[0x00_00_00_ff & this.ir.op2];
         res = ALU.and(this.reg_8bit[A], this.mem.get(addr));
@@ -410,28 +372,24 @@ public class Processor {
 
       // AND (with mem dir  8 bits) acc
       case 38:
-        System.out.println("and");
         res = ALU.and(this.reg_8bit[A], this.mem.get(this.ir.op2));
         this.reg_8bit[A] = res;
         break;
 
       // AND (with num 8 bits) acc
       case 39:
-        System.out.println("and");
         res = ALU.and(this.reg_8bit[A], this.ir.op2);
         this.reg_8bit[A] = res;
         break;
 
       //  OR (with reg 8 bits) acc
       case 40:
-        System.out.println("or");
         res = ALU.or(this.reg_8bit[A], this.reg_8bit[this.ir.op2]);
         this.reg_8bit[A] = res;
         break;
 
       // OR (with mem 8 bits) acc
       case 41:
-        System.out.println("or");
         addr = this.reg_8bit[(0x00_00_ff_00 & this.ir.op2) >>> 8] << 8;
         addr |= this.reg_8bit[0x00_00_00_ff & this.ir.op2];
         res = ALU.or(this.reg_8bit[A], this.mem.get(addr));
@@ -440,28 +398,24 @@ public class Processor {
 
       // OR (with mem 8 bits) acc
       case 42:
-        System.out.println("or");
         res = ALU.or(this.reg_8bit[A], this.mem.get(this.ir.op2));
         this.reg_8bit[A] = res;
         break;
 
       // OR (with num 8 bits) acc
       case 43:
-        System.out.println("or");
         res = ALU.or(this.reg_8bit[A], this.ir.op2);
         this.reg_8bit[A] = res;
         break;
 
       //  XOR (with reg 8 bits) acc
       case 44:
-        System.out.println("xor");
         res = ALU.xor(this.reg_8bit[A], this.reg_8bit[this.ir.op2]);
         this.reg_8bit[A] = res;
         break;
 
       // XOR (with mem 8 bits) acc
       case 45:
-        System.out.println("xor");
         addr = this.reg_8bit[(0x00_00_ff_00 & this.ir.op2) >>> 8] << 8;
         addr |= this.reg_8bit[0x00_00_00_ff & this.ir.op2];
         res = ALU.xor(this.reg_8bit[A], this.mem.get(addr));
@@ -470,21 +424,18 @@ public class Processor {
 
       // XOR (with mem 8 bits) acc
       case 46:
-        System.out.println("xor");
         res = ALU.xor(this.reg_8bit[A], this.mem.get(this.ir.op2));
         this.reg_8bit[A] = res;
         break;
 
       // XOR (with num 8 bits) acc
       case 47:
-        System.out.println("xor");
         res = ALU.xor(this.reg_8bit[A], this.ir.op2);
         this.reg_8bit[A] = res;
         break;
 
       // comparation (with reg 8 bits) acc
       case 48:
-        System.out.println("comparacion");
         if (ALU.equal(this.reg_8bit[A], this.reg_8bit[this.ir.op2])) {
           setFlags(this.carry,false);
           setFlags(this.zero,true);
@@ -499,7 +450,6 @@ public class Processor {
 
       // comparation (with reg 8 bits) acc
       case 49:
-        System.out.println("comparacion");
         addr = this.reg_8bit[(0x00_00_ff_00 & this.ir.op2) >>> 8] << 8;
         addr |= this.reg_8bit[0x00_00_00_ff & this.ir.op2];
         if (ALU.equal(this.reg_8bit[A], this.mem.get(addr))) {
@@ -516,7 +466,6 @@ public class Processor {
 
       // comparation (with reg 8 bits) acc
       case 50:
-        System.out.println("comparacion");
         if (ALU.equal(this.reg_8bit[A], this.mem.get(this.ir.op2))) {
           setFlags(this.carry,false);
           setFlags(this.zero,true);
@@ -531,7 +480,6 @@ public class Processor {
 
       // comparation (with reg 8 bits) acc
       case 51:
-        System.out.println("comparacion");
         if (ALU.equal(this.reg_8bit[A], this.ir.op2)) {
           setFlags(this.carry,false);
           setFlags(this.zero,true);
@@ -546,19 +494,16 @@ public class Processor {
 
       // rigthRotation (with reg 8 bits)
       case 52:
-        System.out.println("rotacion derecha");
         this.reg_8bit[this.ir.op2] = ALU.rigthRotation8(this.reg_8bit[this.ir.op2]);
         break;
 
       // rigthRotation (with reg 16 bits)
       case 53:
-        System.out.println("rotacion derecha");
         this.reg_16bit[this.ir.op2] = ALU.rigthRotation16(this.reg_16bit[this.ir.op2]);
         break;
 
       // rigthRotation (with mem 8 bits)
       case 54:
-        System.out.println("rotacion derecha");
         addr = this.reg_8bit[(0x00_00_ff_00 & this.ir.op2) >>> 8] << 8;
         addr |= this.reg_8bit[0x00_00_00_ff & this.ir.op2];
         this.setMem(addr, ALU.rigthRotation8(this.mem.get(addr)));
@@ -566,31 +511,26 @@ public class Processor {
 
       // rigthRotation (with mem 8 bits)
       case 55:
-        System.out.println("rotacion derecha");
         this.setMem(this.ir.op2, ALU.rigthRotation8(this.mem.get(this.ir.op2)));
         break;
 
       // leftRotation (with reg 8 bits)
       case 56:
-        System.out.println("rotacion izquierda");
         this.reg_8bit[this.ir.op2] = ALU.leftRotation8(this.reg_8bit[this.ir.op2]);
         break;
 
       // leftRotation (with reg 16 bits)
       case 57:
-        System.out.println("rotacion izquierda");
         this.reg_16bit[this.ir.op2] = ALU.leftRotation16(this.reg_16bit[this.ir.op2]);
         break;
 
       case 58:
-        System.out.println("rotacion izquierda");
         addr = this.reg_8bit[(0x00_00_ff_00 & this.ir.op2) >>> 8] << 8;
         addr |= this.reg_8bit[0x00_00_00_ff & this.ir.op2];
         this.setMem(addr, ALU.leftRotation8(this.mem.get(addr)));
         break;
 
       case 59:
-        System.out.println("rotacion izquierda");
         this.setMem(this.ir.op2, ALU.leftRotation8(this.mem.get(this.ir.op2)));
         break;
 
@@ -598,7 +538,6 @@ public class Processor {
 
       // jump C, mem ind
       case 69:
-        System.out.println("jump c");
         if (this.flags[this.carry]) {
           addr = this.reg_8bit[this.ir.op1] << 8;
           addr |= this.reg_8bit[this.ir.op2];
@@ -608,7 +547,6 @@ public class Processor {
 
       // jump pos(is a memory address)
       case 70:
-        System.out.println("jump pos");
         if (this.flags[this.carry]) {
           this.setReg_16bit(PC, this.ir.op2);
         }
@@ -616,7 +554,6 @@ public class Processor {
 
       // jump zero
       case 71:
-        System.out.println("jump z");
         if (this.flags[this.zero]) {
           addr = this.reg_8bit[this.ir.op1] << 8;
           addr |= this.reg_8bit[this.ir.op2];
@@ -626,7 +563,6 @@ public class Processor {
 
       // jump zero(is a memory address)
       case 72:
-        System.out.println("jump z");
         if (this.flags[this.zero]){
           this.setReg_16bit(PC, this.ir.op2);
         }
@@ -634,7 +570,6 @@ public class Processor {
 
       // jump addr
       case 73:
-        System.out.println("jump");
         addr = this.reg_8bit[this.ir.op1] << 8;
         addr |= this.reg_8bit[this.ir.op2];
         this.setReg_16bit(PC, addr);
@@ -647,27 +582,22 @@ public class Processor {
 
       // halt
       case 75:
-        System.out.println("halt");
         this.end = true;
         System.out.println("Fin del programa");
         break;
 
       // end
       case 76:
-        System.out.println("end");
         this.end = true;
-        
         break;
 
       // org
       case 77:
-        System.out.println("org");
         this.setReg_16bit(PC, this.ir.op2);
         break;
 
       // equ
       case 78:
-        System.out.println("equ");
         break;
 
       // call
@@ -675,17 +605,17 @@ public class Processor {
         //TODO: validar SP
         this.setReg_16bit(SP, this.reg_16bit[PC]);
         this.setReg_16bit(PC, this.ir.op2);
-        System.out.println("call");
         break;
 
       // ret
       case 80:
         this.setReg_16bit(PC, this.reg_16bit[SP]);
         this.setReg_16bit(SP, 0);
-        System.out.println("ret");
         break;
-
-
+      
+      // nop
+      case 81:
+        break;
     }
   }
 

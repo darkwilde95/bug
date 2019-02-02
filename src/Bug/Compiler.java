@@ -10,6 +10,7 @@ import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Stack;
 
 /**
@@ -23,6 +24,9 @@ public class Compiler extends bugBaseVisitor<Type>{
   private org.antlr.v4.runtime.tree.ParseTree last = null;
   private Stack<String> used = new Stack();
   private int jp_num = 0;
+  private int while_num = 0;
+  private int if_num = 0;
+  private int elif_num = 0;
   private boolean add_mult = false, add_div = false;
   private PrintWriter outFile;
   private LinkedList<String> program;
@@ -60,12 +64,156 @@ public class Compiler extends bugBaseVisitor<Type>{
 
   @Override
   public Type visitB_while(bugParser.B_whileContext ctx) {
-    return super.visitB_while(ctx); //To change body of generated methods, choose Tools | Templates.
+    int wh = while_num++;
+    Type expr = null;
+    if (ctx.expression_b().getChildCount() == 1) {
+      expr = this.visit(ctx.expression_b());
+      
+      if (expr.isId()) {
+        if (SymbolsTable.containsKey(expr.val)) {
+          if (SymbolsTable.get(expr.val).isBoolean()) {
+            print("WHILE_" + wh + " LD A,(" + expr.val + ")");
+            print("CP 00H");
+          } else {
+            Errors.isNot(Type.BOOL);
+          }
+        } else {
+          Errors.notDeclared(expr.val);
+        }
+      } else {
+        print("WHILE_" + wh + " LD A," + expr.asBoolean());
+        print("CP 00H");
+      }
+    } else {
+      print("WHILE_" + wh + " NOP");
+      this.visit(ctx.expression_b());
+      print("CP 00H");
+    }
+
+    print("JP Z,END_WHILE_" + wh);
+    this.visit(ctx.block());
+    print("JP WHILE_" + wh);
+    print("END_WHILE_" + wh + " NOP");
+    return null;
   }
 
   @Override
   public Type visitB_if(bugParser.B_ifContext ctx) {
-    return super.visitB_if(ctx); //To change body of generated methods, choose Tools | Templates.
+    int if_n = if_num++;
+    int elif_n = 0;
+    List<bugParser.Expression_bContext> expr = ctx.expression_b();
+    List<bugParser.BlockContext> blocks = ctx.block();
+    boolean els = ctx.ELSE() != null;
+    Type expr_aux = null;
+
+    
+    if (ctx.expression_b(0).getChildCount() == 1) {
+      expr_aux = this.visit(ctx.expression_b(0));  
+      if (expr_aux.isId()) {
+        if (SymbolsTable.containsKey(expr_aux.val)) {
+          if (SymbolsTable.get(expr_aux.val).isBoolean()) {
+            print("IF_" + if_n + " LD A,(" + expr_aux.val + ")");
+            print("CP 00H");
+          } else {
+            Errors.isNot(Type.BOOL);
+          }
+        } else {
+          Errors.notDeclared(expr_aux.val);
+        }
+      } else {
+        print("IF_" + if_n + " LD A," + expr_aux.asBoolean());
+        print("CP 00H");
+      }
+    } else {
+      print("IF_" + if_n + " NOP");
+      this.visit(ctx.expression_b(0));
+      print("CP 00H");
+    }
+    
+    if (expr.size() > 1) {
+      elif_n = elif_num++;
+      print("JP Z,ELIF_" + elif_n);
+      this.visit(ctx.block(0));
+      print("JP END_IF_" + if_n);
+      
+      for (int i = 1; i < expr.size()-1; i++) {
+        
+        if (ctx.expression_b(i).getChildCount() == 1) {
+          expr_aux = this.visit(ctx.expression_b(i));  
+          if (expr_aux.isId()) {
+            if (SymbolsTable.containsKey(expr_aux.val)) {
+              if (SymbolsTable.get(expr_aux.val).isBoolean()) {
+                print("ELIF_" + elif_n + " LD A,(" + expr_aux.val + ")");
+                print("CP 00H");
+              } else {
+                Errors.isNot(Type.BOOL);
+              }
+            } else {
+              Errors.notDeclared(expr_aux.val);
+            }
+          } else {
+            print("ELIF_" + elif_n + " LD A," + expr_aux.asBoolean());
+            print("CP 00H");
+          }
+        } else {
+          print("ELIF_" + elif_n + " NOP");
+          this.visit(ctx.expression_b(i));
+          print("CP 00H");
+        }       
+
+        elif_n = elif_num++;
+        print("JP Z,ELIF_" + elif_n);        
+        this.visit(ctx.block(i));
+        print("JP END_IF_" + if_n);
+      }
+      if (ctx.expression_b(expr.size()-1).getChildCount() == 1) {
+          expr_aux = this.visit(ctx.expression_b(expr.size()-1));  
+          if (expr_aux.isId()) {
+            if (SymbolsTable.containsKey(expr_aux.val)) {
+              if (SymbolsTable.get(expr_aux.val).isBoolean()) {
+                print("ELIF_" + elif_n + " LD A,(" + expr_aux.val + ")");
+                print("CP 00H");
+              } else {
+                Errors.isNot(Type.BOOL);
+              }
+            } else {
+              Errors.notDeclared(expr_aux.val);
+            }
+          } else {
+            print("ELIF_" + elif_n + " LD A," + expr_aux.asBoolean());
+            print("CP 00H");
+          }
+        } else {
+          print("ELIF_" + elif_n + " NOP");
+          this.visit(ctx.expression_b(expr.size()-1));
+          print("CP 00H");
+        }
+      
+      if (els) {
+        print("JP Z,ELSE_" + if_n);   
+        this.visit(ctx.block(blocks.size()-2));
+        print("JP END_IF_" + if_n);
+        print("ELSE_" + if_n + " NOP");
+        this.visit(ctx.block(blocks.size()-1));
+      } else {
+        print("JP Z,END_IF_" + if_n);
+        this.visit(ctx.block(blocks.size()-1));
+      }
+    } else {
+      if (els) {
+        print("JP Z,ELSE_" + if_n);
+        this.visit(ctx.block(0));
+        print("JP END_IF_" + if_n);
+        print("ELSE_" + if_n + " NOP");
+        this.visit(ctx.block(1));
+      } else {
+        print("JP Z,END_IF_" + if_n);
+        this.visit(ctx.block(0));
+      }
+    }
+    print("END_IF_" + if_n + " NOP");
+    
+    return null;
   }
 
   @Override
@@ -566,7 +714,7 @@ public class Compiler extends bugBaseVisitor<Type>{
               print("LD A,01H");  // 3
               print("JP JUMP_" + jp2);  // 4 -> 6
               print("JUMP_" + jp1 + " LD A,00H");  //5
-              print("JUMP_" + jp2 + " ADD A,00H");
+              print("JUMP_" + jp2 + " NOP");
               break;
 
             case bugParser.LT:
@@ -580,7 +728,7 @@ public class Compiler extends bugBaseVisitor<Type>{
               print("LD A,00H");  // 2
               print("JP JUMP_" + jp2);  // 3 -> 5
               print("JUMP_" + jp1 + " LD A,01H");  // 4
-              print("JUMP_" + jp2 + " ADD A,00H"); // 5
+              print("JUMP_" + jp2 + " NOP"); // 5
               break;
 
             case bugParser.GE:
@@ -596,7 +744,7 @@ public class Compiler extends bugBaseVisitor<Type>{
               print("LD A,01H");  // 3
               print("JP JUMP_" + jp2);  // 4 -> 6
               print("JUMP_" + jp1 + " LD A,00H");  //5
-              print("JUMP_" + jp2 + " ADD A,00H");
+              print("JUMP_" + jp2 + " NOP");
               break;
 
             case bugParser.LE:
@@ -611,7 +759,7 @@ public class Compiler extends bugBaseVisitor<Type>{
               print("LD A,00H");
               print("JP JUMP_" + jp2);
               print("JUMP_" + jp1 + " LD A,01H");
-              print("JUMP_" + jp2 + " ADD A,00H");
+              print("JUMP_" + jp2 + " NOP");
               break;
           }
           
@@ -640,7 +788,7 @@ public class Compiler extends bugBaseVisitor<Type>{
                     print("LD A,01H");  // 3
                     print("JP JUMP_" + jp2);  // 4 -> 6
                     print("JUMP_" + jp1 + " LD A,00H");  //5
-                    print("JUMP_" + jp2 + " ADD A,00H");
+                    print("JUMP_" + jp2 + " NOP");
                     break;
 
                   case bugParser.LT:
@@ -651,7 +799,7 @@ public class Compiler extends bugBaseVisitor<Type>{
                     print("LD A,00H");  // 2
                     print("JP JUMP_" + jp2);  // 3 -> 5
                     print("JUMP_" + jp1 + " LD A,01H");  // 4
-                    print("JUMP_" + jp2 + " ADD A,00H"); // 5
+                    print("JUMP_" + jp2 + " NOP"); // 5
                     break;
 
                   case bugParser.GE:
@@ -665,7 +813,7 @@ public class Compiler extends bugBaseVisitor<Type>{
                     print("LD A,01H");  // 3
                     print("JP JUMP_" + jp2);  // 4 -> 6
                     print("JUMP_" + jp1 + " LD A,00H");  //5
-                    print("JUMP_" + jp2 + " ADD A,00H");
+                    print("JUMP_" + jp2 + " NOP");
                     break;
 
                   case bugParser.LE:
@@ -678,7 +826,7 @@ public class Compiler extends bugBaseVisitor<Type>{
                     print("LD A,00H");
                     print("JP JUMP_" + jp2);
                     print("JUMP_" + jp1 + " LD A,01H");
-                    print("JUMP_" + jp2 + " ADD A,00H");
+                    print("JUMP_" + jp2 + " NOP");
                     break;
                 }
                 
@@ -702,7 +850,7 @@ public class Compiler extends bugBaseVisitor<Type>{
                 print("LD A,01H");  // 3
                 print("JP JUMP_" + jp2);  // 4 -> 6
                 print("JUMP_" + jp1 + " LD A,00H");  //5
-                print("JUMP_" + jp2 + " ADD A,00H");
+                print("JUMP_" + jp2 + " NOP");
                 break;
 
               case bugParser.LT:
@@ -713,7 +861,7 @@ public class Compiler extends bugBaseVisitor<Type>{
                 print("LD A,00H");  // 2
                 print("JP JUMP_" + jp2);  // 3 -> 5
                 print("JUMP_" + jp1 + " LD A,01H");  // 4
-                print("JUMP_" + jp2 + " ADD A,00H"); // 5
+                print("JUMP_" + jp2 + " NOP"); // 5
                 break;
 
               case bugParser.GE:
@@ -727,7 +875,7 @@ public class Compiler extends bugBaseVisitor<Type>{
                 print("LD A,01H");  // 3
                 print("JP JUMP_" + jp2);  // 4 -> 6
                 print("JUMP_" + jp1 + " LD A,00H");  //5
-                print("JUMP_" + jp2 + " ADD A,00H");
+                print("JUMP_" + jp2 + " NOP");
                 break;
 
               case bugParser.LE:
@@ -740,7 +888,7 @@ public class Compiler extends bugBaseVisitor<Type>{
                 print("LD A,00H");
                 print("JP JUMP_" + jp2);
                 print("JUMP_" + jp1 + " LD A,01H");
-                print("JUMP_" + jp2 + " ADD A,00H");
+                print("JUMP_" + jp2 + " NOP");
                 break;
             }
             
@@ -768,7 +916,7 @@ public class Compiler extends bugBaseVisitor<Type>{
                     print("LD A,01H");  // 3
                     print("JP JUMP_" + jp2);  // 4 -> 6
                     print("JUMP_" + jp1 + " LD A,00H");  //5
-                    print("JUMP_" + jp2 + " ADD A,00H");
+                    print("JUMP_" + jp2 + " NOP");
                     break;
 
                   case bugParser.LT:
@@ -781,7 +929,7 @@ public class Compiler extends bugBaseVisitor<Type>{
                     print("LD A,00H");  // 2
                     print("JP JUMP_" + jp2);  // 3 -> 5
                     print("JUMP_" + jp1 + " LD A,01H");  // 4
-                    print("JUMP_" + jp2 + " ADD A,00H"); // 5
+                    print("JUMP_" + jp2 + " NOP"); // 5
                     break;
 
                   case bugParser.GE:
@@ -796,7 +944,7 @@ public class Compiler extends bugBaseVisitor<Type>{
                     print("LD A,01H");  // 3
                     print("JP JUMP_" + jp2);  // 4 -> 6
                     print("JUMP_" + jp1 + " LD A,00H");  //5
-                    print("JUMP_" + jp2 + " ADD A,00H");
+                    print("JUMP_" + jp2 + " NOP");
                     break;
 
                   case bugParser.LE:
@@ -810,7 +958,7 @@ public class Compiler extends bugBaseVisitor<Type>{
                     print("LD A,00H");
                     print("JP JUMP_" + jp2);
                     print("JUMP_" + jp1 + " LD A,01H");
-                    print("JUMP_" + jp2 + " ADD A,00H");
+                    print("JUMP_" + jp2 + " NOP");
                     break;
                 }
                 
@@ -836,7 +984,7 @@ public class Compiler extends bugBaseVisitor<Type>{
                 print("LD A,01H");  // 3
                 print("JP JUMP_" + jp2);  // 4 -> 6
                 print("JUMP_" + jp1 + " LD A,00H");  //5
-                print("JUMP_" + jp2 + " ADD A,00H");
+                print("JUMP_" + jp2 + " NOP");
                 break;
 
               case bugParser.LT:
@@ -849,7 +997,7 @@ public class Compiler extends bugBaseVisitor<Type>{
                 print("LD A,00H");  // 2
                 print("JP JUMP_" + jp2);  // 3 -> 5
                 print("JUMP_" + jp1 + " LD A,01H");  // 4
-                print("JUMP_" + jp2 + " ADD A,00H"); // 5
+                print("JUMP_" + jp2 + " NOP"); // 5
                 break;
 
               case bugParser.GE:
@@ -864,7 +1012,7 @@ public class Compiler extends bugBaseVisitor<Type>{
                 print("LD A,01H");  // 3
                 print("JP JUMP_" + jp2);  // 4 -> 6
                 print("JUMP_" + jp1 + " LD A,00H");  //5
-                print("JUMP_" + jp2 + " ADD A,00H");
+                print("JUMP_" + jp2 + " NOP");
                 break;
 
               case bugParser.LE:
@@ -878,7 +1026,7 @@ public class Compiler extends bugBaseVisitor<Type>{
                 print("LD A,00H");
                 print("JP JUMP_" + jp2);
                 print("JUMP_" + jp1 + " LD A,01H");
-                print("JUMP_" + jp2 + " ADD A,00H");
+                print("JUMP_" + jp2 + " NOP");
                 break;
             }
             return new Type(Type.EXPR, Type.BOOL);
@@ -902,7 +1050,7 @@ public class Compiler extends bugBaseVisitor<Type>{
             print("LD A,01H");  // 3
             print("JP JUMP_" + jp2);  // 4 -> 6
             print("JUMP_" + jp1 + " LD A,00H");  //5
-            print("JUMP_" + jp2 + " ADD A,00H");
+            print("JUMP_" + jp2 + " NOP");
             break;
 
           case bugParser.LT:
@@ -913,7 +1061,7 @@ public class Compiler extends bugBaseVisitor<Type>{
             print("LD A,00H");  // 2
             print("JP JUMP_" + jp2);  // 3 -> 5
             print("JUMP_" + jp1 + " LD A,01H");  // 4
-            print("JUMP_" + jp2 + " ADD A,00H"); // 5
+            print("JUMP_" + jp2 + " NOP"); // 5
             break;
 
           case bugParser.GE:
@@ -927,7 +1075,7 @@ public class Compiler extends bugBaseVisitor<Type>{
             print("LD A,01H");  // 3
             print("JP JUMP_" + jp2);  // 4 -> 6
             print("JUMP_" + jp1 + " LD A,00H");  //5
-            print("JUMP_" + jp2 + " ADD A,00H");
+            print("JUMP_" + jp2 + " NOP");
             break;
 
           case bugParser.LE:
@@ -940,7 +1088,7 @@ public class Compiler extends bugBaseVisitor<Type>{
             print("LD A,00H");
             print("JP JUMP_" + jp2);
             print("JUMP_" + jp1 + " LD A,01H");
-            print("JUMP_" + jp2 + " ADD A,00H");
+            print("JUMP_" + jp2 + " NOP");
             break;
         }
         return new Type(Type.EXPR, Type.BOOL);
@@ -959,7 +1107,7 @@ public class Compiler extends bugBaseVisitor<Type>{
                 print("LD A,01H");  // 3
                 print("JP JUMP_" + jp2);  // 4 -> 6
                 print("JUMP_" + jp1 + " LD A,00H");  //5
-                print("JUMP_" + jp2 + " ADD A,00H");
+                print("JUMP_" + jp2 + " NOP");
                 break;
 
               case bugParser.LT:
@@ -970,7 +1118,7 @@ public class Compiler extends bugBaseVisitor<Type>{
                 print("LD A,00H");  // 2
                 print("JP JUMP_" + jp2);  // 3 -> 5
                 print("JUMP_" + jp1 + " LD A,01H");  // 4
-                print("JUMP_" + jp2 + " ADD A,00H"); // 5
+                print("JUMP_" + jp2 + " NOP"); // 5
                 break;
 
               case bugParser.GE:
@@ -984,7 +1132,7 @@ public class Compiler extends bugBaseVisitor<Type>{
                 print("LD A,01H");  // 3
                 print("JP JUMP_" + jp2);  // 4 -> 6
                 print("JUMP_" + jp1 + " LD A,00H");  //5
-                print("JUMP_" + jp2 + " ADD A,00H");
+                print("JUMP_" + jp2 + " NOP");
                 break;
 
               case bugParser.LE:
@@ -997,7 +1145,7 @@ public class Compiler extends bugBaseVisitor<Type>{
                 print("LD A,00H");
                 print("JP JUMP_" + jp2);
                 print("JUMP_" + jp1 + " LD A,01H");
-                print("JUMP_" + jp2 + " ADD A,00H");
+                print("JUMP_" + jp2 + " NOP");
                 break;
             }
 
@@ -1023,7 +1171,7 @@ public class Compiler extends bugBaseVisitor<Type>{
                 print("LD A,01H");  // 3
                 print("JP JUMP_" + jp2);  // 4 -> 6
                 print("JUMP_" + jp1 + " LD A,00H");  //5
-                print("JUMP_" + jp2 + " ADD A,00H");
+                print("JUMP_" + jp2 + " NOP");
                 break;
 
               case bugParser.LT:
@@ -1034,7 +1182,7 @@ public class Compiler extends bugBaseVisitor<Type>{
                 print("LD A,00H");  // 2
                 print("JP JUMP_" + jp2);  // 3 -> 5
                 print("JUMP_" + jp1 + " LD A,01H");  // 4
-                print("JUMP_" + jp2 + " ADD A,00H"); // 5
+                print("JUMP_" + jp2 + " NOP"); // 5
                 break;
 
               case bugParser.GE:
@@ -1048,7 +1196,7 @@ public class Compiler extends bugBaseVisitor<Type>{
                 print("LD A,01H");  // 3
                 print("JP JUMP_" + jp2);  // 4 -> 6
                 print("JUMP_" + jp1 + " LD A,00H");  //5
-                print("JUMP_" + jp2 + " ADD A,00H");
+                print("JUMP_" + jp2 + " NOP");
                 break;
 
               case bugParser.LE:
@@ -1061,7 +1209,7 @@ public class Compiler extends bugBaseVisitor<Type>{
                 print("LD A,00H");
                 print("JP JUMP_" + jp2);
                 print("JUMP_" + jp1 + " LD A,01H");
-                print("JUMP_" + jp2 + " ADD A,00H");
+                print("JUMP_" + jp2 + " NOP");
                 break;
             }
 
@@ -1089,7 +1237,7 @@ public class Compiler extends bugBaseVisitor<Type>{
                     print("LD A,01H");  // 3
                     print("JP JUMP_" + jp2);  // 4 -> 6
                     print("JUMP_" + jp1 + " LD A,00H");  //5
-                    print("JUMP_" + jp2 + " ADD A,00H");
+                    print("JUMP_" + jp2 + " NOP");
                     break;
 
                   case bugParser.LT:
@@ -1100,7 +1248,7 @@ public class Compiler extends bugBaseVisitor<Type>{
                     print("LD A,00H");  // 2
                     print("JP JUMP_" + jp2);  // 3 -> 5
                     print("JUMP_" + jp1 + " LD A,01H");  // 4
-                    print("JUMP_" + jp2 + " ADD A,00H"); // 5
+                    print("JUMP_" + jp2 + " NOP"); // 5
                     break;
 
                   case bugParser.GE:
@@ -1114,7 +1262,7 @@ public class Compiler extends bugBaseVisitor<Type>{
                     print("LD A,01H");  // 3
                     print("JP JUMP_" + jp2);  // 4 -> 6
                     print("JUMP_" + jp1 + " LD A,00H");  //5
-                    print("JUMP_" + jp2 + " ADD A,00H");
+                    print("JUMP_" + jp2 + " NOP");
                     break;
 
                   case bugParser.LE:
@@ -1127,7 +1275,7 @@ public class Compiler extends bugBaseVisitor<Type>{
                     print("LD A,00H");
                     print("JP JUMP_" + jp2);
                     print("JUMP_" + jp1 + " LD A,01H");
-                    print("JUMP_" + jp2 + " ADD A,00H");
+                    print("JUMP_" + jp2 + " NOP");
                     break;
                 }
 
@@ -1449,7 +1597,7 @@ public class Compiler extends bugBaseVisitor<Type>{
           print(op ? "LD A,00H" : "LD A,01H");
           print("JP JUMP_" + jp2);
           print(op ? "JUMP_" + jp1 + " LD A,01H" : "JUMP_" + jp1 + " LD A,00H");
-          print("JUMP_" + jp2 + " ADD A,00H");
+          print("JUMP_" + jp2 + " NOP");
           return new Type(Type.EXPR, Type.BOOL);
         } else {
           Errors.operationNotSupported(left.auxType, right.auxType, ctx.op.getText());
@@ -1472,7 +1620,7 @@ public class Compiler extends bugBaseVisitor<Type>{
                 print(op ? "LD A,00H" : "LD A,01H");
                 print("JP JUMP_" + jp2);
                 print(op ? "JUMP_" + jp1 + " LD A,01H" : "JUMP_" + jp1 + " LD A,00H");
-                print("JUMP_" + jp2 + " ADD A,00H");
+                print("JUMP_" + jp2 + " NOP");
                 return new Type(Type.EXPR, Type.BOOL);
               } else {
                 Errors.areNot(Type.INT);
@@ -1490,7 +1638,7 @@ public class Compiler extends bugBaseVisitor<Type>{
             print(op ? "LD A,00H" : "LD A,01H");
             print("JP JUMP_" + jp2);
             print(op ? "JUMP_" + jp1 + " LD A,01H" : "JUMP_" + jp1 + " LD A,00H");
-            print("JUMP_" + jp2 + " ADD A,00H");
+            print("JUMP_" + jp2 + " NOP");
             return new Type(Type.EXPR, Type.BOOL);
           } else {
             Errors.incompatibleTypes(left.auxType, right.type, ctx.op.getText());
@@ -1510,7 +1658,7 @@ public class Compiler extends bugBaseVisitor<Type>{
                 print(op ? "LD A,00H" : "LD A,01H");
                 print("JP JUMP_" + jp2);
                 print(op ? "JUMP_" + jp1 + " LD A,01H" : "JUMP_" + jp1 + " LD A,00H");
-                print("JUMP_" + jp2 + " ADD A,00H");
+                print("JUMP_" + jp2 + " NOP");
                 return new Type(Type.EXPR, Type.BOOL);
               } else {
                 Errors.areNot(Type.INT);
@@ -1528,7 +1676,7 @@ public class Compiler extends bugBaseVisitor<Type>{
             print(op ? "LD A,00H" : "LD A,01H");
             print("JP JUMP_" + jp2);
             print(op ? "JUMP_" + jp1 + " LD A,01H" : "JUMP_" + jp1 + " LD A,00H");
-            print("JUMP_" + jp2 + " ADD A,00H");
+            print("JUMP_" + jp2 + " NOP");
             return new Type(Type.EXPR, Type.BOOL);
           } else {
             Errors.incompatibleTypes(left.type, right.auxType, ctx.op.getText());
@@ -1546,7 +1694,7 @@ public class Compiler extends bugBaseVisitor<Type>{
         print(op ? "LD A,00H" : "LD A,01H");
         print("JP JUMP_" + jp2);
         print(op ? "JUMP_" + jp1 + " LD A,01H" : "JUMP_" + jp1 + " LD A,00H");
-        print("JUMP_" + jp2 + " ADD A,00H");
+        print("JUMP_" + jp2 + " NOP");
         return new Type(Type.EXPR, Type.BOOL);
 
       } else if (left.type == Type.BOOL && right.type == Type.ID) {
@@ -1560,7 +1708,7 @@ public class Compiler extends bugBaseVisitor<Type>{
             print(op ? "LD A,00H" : "LD A,01H");
             print("JP JUMP_" + jp2);
             print(op ? "JUMP_" + jp1 + " LD A,01H" : "JUMP_" + jp1 + " LD A,00H");
-            print("JUMP_" + jp2 + " ADD A,00H");
+            print("JUMP_" + jp2 + " NOP");
 
             return new Type(Type.EXPR, Type.BOOL);
           } else {
@@ -1581,7 +1729,7 @@ public class Compiler extends bugBaseVisitor<Type>{
             print(op ? "LD A,00H" : "LD A,01H");
             print("JP JUMP_" + jp2);
             print(op ? "JUMP_" + jp1 + " LD A,01H" : "JUMP_" + jp1 + " LD A,00H");
-            print("JUMP_" + jp2 + " ADD A,00H");
+            print("JUMP_" + jp2 + " NOP");
             return new Type(Type.EXPR, Type.BOOL);
           } else {
             Errors.incompatibleTypes(SymbolsTable.get(left.val).type, right.type, ctx.op.getText());
@@ -1604,7 +1752,7 @@ public class Compiler extends bugBaseVisitor<Type>{
                 print(op ? "LD A,00H" : "LD A,01H");
                 print("JP JUMP_" + jp2);
                 print(op ? "JUMP_" + jp1 + " LD A,01H" : "JUMP_" + jp1 + " LD A,00H");
-                print("JUMP_" + jp2 + " ADD A,00H");
+                print("JUMP_" + jp2 + " NOP");
 
                 return new Type(Type.EXPR, Type.BOOL);
               } else {
@@ -1651,7 +1799,7 @@ public class Compiler extends bugBaseVisitor<Type>{
           print(op ? "LD A,00H" : "LD A,01H");
           print("JP JUMP_" + jp2);
           print(op ? "JUMP_" + jp1 + " LD A,01H" : "JUMP_" + jp1 + " LD A,00H");
-          print("JUMP_" + jp2 + " ADD A,00H");
+          print("JUMP_" + jp2 + " NOP");
           return new Type(Type.EXPR, Type.BOOL);
         } else {
           Errors.operationNotSupported(left.auxType, right.auxType, ctx.op.getText());
@@ -1674,7 +1822,7 @@ public class Compiler extends bugBaseVisitor<Type>{
                 print(op ? "LD A,00H" : "LD A,01H");
                 print("JP JUMP_" + jp2);
                 print(op ? "JUMP_" + jp1 + " LD A,01H" : "JUMP_" + jp1 + " LD A,00H");
-                print("JUMP_" + jp2 + " ADD A,00H");
+                print("JUMP_" + jp2 + " NOP");
                 return new Type(Type.EXPR, Type.BOOL);
               } else {
                 Errors.areNot(Type.INT);
@@ -1692,7 +1840,7 @@ public class Compiler extends bugBaseVisitor<Type>{
             print(op ? "LD A,00H" : "LD A,01H");
             print("JP JUMP_" + jp2);
             print(op ? "JUMP_" + jp1 + " LD A,01H" : "JUMP_" + jp1 + " LD A,00H");
-            print("JUMP_" + jp2 + " ADD A,00H");
+            print("JUMP_" + jp2 + " NOP");
             return new Type(Type.EXPR, Type.BOOL);
           } else {
             Errors.incompatibleTypes(left.auxType, right.type, ctx.op.getText());
@@ -1712,7 +1860,7 @@ public class Compiler extends bugBaseVisitor<Type>{
                 print(op ? "LD A,00H" : "LD A,01H");
                 print("JP JUMP_" + jp2);
                 print(op ? "JUMP_" + jp1 + " LD A,01H" : "JUMP_" + jp1 + " LD A,00H");
-                print("JUMP_" + jp2 + " ADD A,00H");
+                print("JUMP_" + jp2 + " NOP");
                 return new Type(Type.EXPR, Type.BOOL);
               } else {
                 Errors.areNot(Type.INT);
@@ -1730,7 +1878,7 @@ public class Compiler extends bugBaseVisitor<Type>{
             print(op ? "LD A,00H" : "LD A,01H");
             print("JP JUMP_" + jp2);
             print(op ? "JUMP_" + jp1 + " LD A,01H" : "JUMP_" + jp1 + " LD A,00H");
-            print("JUMP_" + jp2 + " ADD A,00H");
+            print("JUMP_" + jp2 + " NOP");
             return new Type(Type.EXPR, Type.BOOL);
           } else {
             Errors.incompatibleTypes(left.type, right.auxType, ctx.op.getText());
@@ -1748,7 +1896,7 @@ public class Compiler extends bugBaseVisitor<Type>{
         print(op ? "LD A,00H" : "LD A,01H");
         print("JP JUMP_" + jp2);
         print(op ? "JUMP_" + jp1 + " LD A,01H" : "JUMP_" + jp1 + " LD A,00H");
-        print("JUMP_" + jp2 + " ADD A,00H");
+        print("JUMP_" + jp2 + " NOP");
         return new Type(Type.EXPR, Type.BOOL);
 
       } else if (left.type == Type.INT && right.type == Type.ID) {
@@ -1762,7 +1910,7 @@ public class Compiler extends bugBaseVisitor<Type>{
             print(op ? "LD A,00H" : "LD A,01H");
             print("JP JUMP_" + jp2);
             print(op ? "JUMP_" + jp1 + " LD A,01H" : "JUMP_" + jp1 + " LD A,00H");
-            print("JUMP_" + jp2 + " ADD A,00H");
+            print("JUMP_" + jp2 + " NOP");
 
             return new Type(Type.EXPR, Type.BOOL);
           } else {
@@ -1783,7 +1931,7 @@ public class Compiler extends bugBaseVisitor<Type>{
             print(op ? "LD A,00H" : "LD A,01H");
             print("JP JUMP_" + jp2);
             print(op ? "JUMP_" + jp1 + " LD A,01H" : "JUMP_" + jp1 + " LD A,00H");
-            print("JUMP_" + jp2 + " ADD A,00H");
+            print("JUMP_" + jp2 + " NOP");
             return new Type(Type.EXPR, Type.BOOL);
           } else {
             Errors.incompatibleTypes(SymbolsTable.get(left.val).type, right.type, ctx.op.getText());
@@ -1805,7 +1953,7 @@ public class Compiler extends bugBaseVisitor<Type>{
               print(op ? "LD A,00H" : "LD A,01H");
               print("JP JUMP_" + jp2);
               print(op ? "JUMP_" + jp1 + " LD A,01H" : "JUMP_" + jp1 + " LD A,00H");
-              print("JUMP_" + jp2 + " ADD A,00H");
+              print("JUMP_" + jp2 + " NOP");
 
               return new Type(Type.EXPR, Type.BOOL);
             } else {

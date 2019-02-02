@@ -17,6 +17,7 @@ public class Assembler {
     this.reg_16bit = new HashMap();
     this.labels = new HashMap();
     this.opcodes = new HashSet();
+    this.opcodes.add("NOP");
     this.opcodes.add("ADD");
     this.opcodes.add("SUB");
     this.opcodes.add("LD");
@@ -704,6 +705,10 @@ public class Assembler {
         case "RET":
           // retorno desde una subrutina
           this.ir.opcode = 80;
+          break;
+          
+        case "NOP":
+          this.ir.opcode = 81;
           break;
 
         default:
