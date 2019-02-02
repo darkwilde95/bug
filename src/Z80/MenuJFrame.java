@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package z80;
+package Z80;
 
 import java.io.IOException;
 import java.util.logging.Level;
@@ -251,19 +251,19 @@ public class MenuJFrame extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-        Thread thread = new Thread("New Thread") {
-            @Override
-            public void run(){                
-                try {
-                    System.out.println(choice1.getSelectedIndex());
-                    ui.getProgram(jTextField1.getText(),choice1.getSelectedIndex(), Integer.valueOf(jTextFieldSpd.getText()));
-                } catch (InterruptedException | IOException ex) {
-                    Logger.getLogger(MenuJFrame.class.getName()).log(Level.SEVERE, null, ex);
-                }
-                System.out.println("run by: " + getName());
-            }
-        };
-        thread.start();
+      Thread thread = new Thread("New Thread") {
+        @Override
+        public void run(){                
+          try {
+//            System.out.println(choice1.getSelectedIndex());
+            ui.getProgram(jTextField1.getText(),choice1.getSelectedIndex(), Integer.valueOf(jTextFieldSpd.getText()));
+          } catch (InterruptedException | IOException ex) {
+            Logger.getLogger(MenuJFrame.class.getName()).log(Level.SEVERE, null, ex);
+          }
+          System.out.println("run by: " + getName());
+        }
+      };
+      thread.start();
         //this.setVisible(false);
         //dispose();
     }//GEN-LAST:event_jButton1ActionPerformed

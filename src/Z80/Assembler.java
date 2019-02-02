@@ -1,11 +1,10 @@
-package z80;
+package Z80;
 
 import java.io.*;
 import java.util.HashMap;
 import java.util.HashSet;
 
 public class Assembler {
-  private int programSize;
 
   private HashMap<String, Integer> reg_8bit;
   private HashMap<String, Integer> reg_16bit;
@@ -14,7 +13,6 @@ public class Assembler {
   private IR ir;
 
   public Assembler() {
-    this.programSize = 0;
     this.reg_8bit = new HashMap();
     this.reg_16bit = new HashMap();
     this.labels = new HashMap();
@@ -74,7 +72,6 @@ public class Assembler {
     String[] line = null;
     int auxPointer = 0;
     while ((input = b.readLine()) != null) {
-      this.programSize++;
       if (input.charAt(0) == '#') continue;
       line = input.split(" ");
       if (line.length == 3 || !this.opcodes.contains(line[0])) {
@@ -83,6 +80,9 @@ public class Assembler {
 
       if (!line[0].equalsIgnoreCase("ORG")){
          auxPointer+=5;
+      }
+      if (line[0].equalsIgnoreCase("END")){
+        break;
       }
     }
     b.close();
@@ -96,7 +96,7 @@ public class Assembler {
     String[] aux = null, params = null;
     FileReader f = new FileReader(inputFile);
     BufferedReader b = new BufferedReader(f);
-    PrintWriter outFile = new PrintWriter("relocatableCode.txt", "UTF-8");
+    PrintWriter outFile = new PrintWriter("programs/relocatableCode.txt", "UTF-8");
 
     while((line = b.readLine()) != null) {
       relocate = false;
@@ -146,7 +146,6 @@ public class Assembler {
             } else {
               this.ir.opcode = 2;
               this.ir.op2 = this.toDec(params[1].substring(1,5));
-              relocate = true;
             }
 
           } else {
@@ -176,7 +175,6 @@ public class Assembler {
             } else {
               this.ir.opcode = 6;
               this.ir.op2 = this.toDec(params[0].substring(1,5));
-              relocate = true;
             }
 
           } else {
@@ -208,7 +206,6 @@ public class Assembler {
             } else {
               this.ir.opcode = 11;
               this.ir.op2 = this.toDec(params[0].substring(1,5));
-              relocate = true;
             }
           }
           break;
@@ -233,7 +230,6 @@ public class Assembler {
             } else {
               this.ir.opcode = 15;
               this.ir.op2 = this.toDec(params[0].substring(1,5));
-              relocate = true;
             }
           }
           break;
@@ -269,7 +265,6 @@ public class Assembler {
               } else {
                 this.ir.opcode = 20;
                 this.ir.op2 = this.toDec(params[1].substring(1,5));
-                relocate = true;
               }
             // desde num
             } else {
@@ -333,7 +328,6 @@ public class Assembler {
                 } else {
                   this.ir.opcode = 28;
                   this.ir.op2 = this.toDec(params[1].substring(1,5));
-                  relocate = true;
                 }
 
               // desde num
@@ -344,7 +338,6 @@ public class Assembler {
 
             // memoria directa
             } else {
-              relocate = true;
               this.ir.op1 = this.toDec(params[0].substring(1,5));
 
               // desde registro
@@ -399,7 +392,6 @@ public class Assembler {
             } else {
               this.ir.opcode = 38;
               this.ir.op2 = this.toDec(params[0].substring(1,5));
-              relocate = true;
             }
 
           // Num
@@ -427,7 +419,6 @@ public class Assembler {
             } else {
               this.ir.opcode = 42;
               this.ir.op2 = this.toDec(params[0].substring(1,5));
-              relocate = true;
             }
 
           // Num
@@ -455,7 +446,6 @@ public class Assembler {
             } else {
               this.ir.opcode = 46;
               this.ir.op2 = this.toDec(params[0].substring(1,5));
-              relocate = true;
             }
 
           // Num
@@ -483,7 +473,6 @@ public class Assembler {
             } else {
               this.ir.opcode = 50;
               this.ir.op2 = this.toDec(params[0].substring(1,5));
-              relocate = true;
             }
 
           // Num
@@ -514,7 +503,6 @@ public class Assembler {
             } else {
               this.ir.opcode = 55;
               this.ir.op2 = this.toDec(params[0].substring(1,5));
-              relocate = true;
             }
           }
           break;
@@ -540,7 +528,6 @@ public class Assembler {
             } else {
               this.ir.opcode = 59;
               this.ir.op2 = this.toDec(params[0].substring(1,5));
-              relocate = true;
             }
           }
           break;
@@ -563,7 +550,6 @@ public class Assembler {
             } else {
               this.ir.opcode = 62;
               this.ir.op2 = this.toDec(params[1].substring(1,5));
-              relocate = true;
             }
           }
           break;
@@ -586,7 +572,6 @@ public class Assembler {
             } else {
               this.ir.opcode = 65;
               this.ir.op2 = this.toDec(params[1].substring(1,5));
-              relocate = true;
             }
           }
           break;
@@ -609,7 +594,6 @@ public class Assembler {
             } else {
               this.ir.opcode = 68;
               this.ir.op2 = this.toDec(params[1].substring(1,5));
-              relocate = true;
             }
           }
           break;

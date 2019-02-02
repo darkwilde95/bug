@@ -1,9 +1,14 @@
-package z80;
+package Z80;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.io.FileNotFoundException;
 import java.io.IOException;
+import Bug.Compiler;
+import Bug.bugLexer;
+import Bug.bugParser;
+import java.io.FileInputStream;
+import java.io.InputStream;
+import org.antlr.v4.runtime.ANTLRInputStream;
+import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.tree.ParseTree;
 
 class UI {
  private GUIJFrame f;
@@ -15,11 +20,20 @@ class UI {
     public void getProgram(String file, int ch, int spd) throws InterruptedException, IOException {
     //this.f=new GUIJFrame();
     f.setVisible(true);
+    InputStream is = System.in;
+    if ( file!=null ) is = new FileInputStream(file);
+    ANTLRInputStream input = new ANTLRInputStream(is);
+    bugLexer lexer = new bugLexer(input);
+    CommonTokenStream tokens = new CommonTokenStream(lexer);
+    bugParser parser = new bugParser(tokens);
+    ParseTree tree = parser.program(); // parse
+    Compiler eval = new Compiler();
+    eval.visit(tree);    
     Memory mem = new Memory(this);
     Assembler a = new Assembler();    
-    a.assemble(file);    
-    LinkerLoader l = new LinkerLoader();    
-    l.chargeProgram("relocatableCode.txt", mem);    
+    a.assemble("programs/program.assembler");    
+    LinkerLoader l = new LinkerLoader();
+    l.chargeProgram("programs/relocatableCode.txt", mem);    
     updateMem(mem); //print mem in ui
     this.z80 = new Processor(mem, this, spd);
     if(ch==0){z80.runProgram();}  

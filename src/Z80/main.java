@@ -1,4 +1,4 @@
-package z80;
+package Z80;
 
 import java.io.IOException;
 

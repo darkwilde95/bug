@@ -1,4 +1,4 @@
-package z80;
+package Z80;
 
 import java.io.*;
 
@@ -17,7 +17,7 @@ public class LinkerLoader {
   public void chargeProgram(String file, Memory m) throws FileNotFoundException, IOException {
     FileReader f = new FileReader(file);
     BufferedReader b = new BufferedReader(f);
-    PrintWriter outfile = new PrintWriter("programBinary.txt", "UTF-8");
+    PrintWriter outfile = new PrintWriter("programs/programBinary.txt", "UTF-8");
     String line = null;
     int[] instruction = null;
     int addr = 0, lines = 0;

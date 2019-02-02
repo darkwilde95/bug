@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package z80;
+package Z80;
 
 import java.awt.Color;
 import java.awt.Component;
@@ -721,7 +721,7 @@ public class GUIJFrame extends javax.swing.JFrame {
         for(int i=0;i<mem.length;i++){
             dm.add(i, mem[i]);
         }
-        System.out.println(dm.getSize());
+//        System.out.println(dm.getSize());
         jList1.setModel(dm);
 //        jList1.setModel(new javax.swing.AbstractListModel<String>() {
 //            String[] strings = mem;

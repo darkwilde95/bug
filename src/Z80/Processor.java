@@ -1,4 +1,4 @@
-package z80;
+package Z80;
 
 import java.io.IOException;
 
@@ -122,7 +122,6 @@ public class Processor {
     this.ui.printLabel(String.valueOf(this.ir.opcode));
     this.ui.printLabelOp(String.valueOf(this.ir.op1));
     this.ui.printLabelOp2(String.valueOf(this.ir.op2));
-//    System.out.print(this.ir.opcode + " " );
 
     switch (this.ir.opcode) {
       // add (with reg 8 bits) accum->op1
@@ -695,56 +694,89 @@ public class Processor {
   //  00000000 | 00000000 00000000| 00000000 00000000
 
   /*
-  0  add (with reg 8 bits) accum
-  1  add (with num 8 bits) accum
-  2  add (with mem 8 bits) accum
-  3  sub (with reg 8 bits) accum
-  4  sub (with num 8 bits) accum
-  5  sub (with mem 8 bits) accum
-  6  increment1 (with reg 8 bits)
-  7  increment1 (with reg 16 bits)
-  8  increment1 (with mem 8 bits)
-  9  decrement1 (with reg 8 bits)
-  10  decrement1 (with reg 16 bits)
-  11  decrement1 (with mem 8 bits)
-  12  complement1 (only acc)
-  13  complement2 (only acc)
-  14  load (with reg 8 - reg 8)/
-  15  load (with reg 16 - reg 16)
-  16  load (with reg 8 - mem 8)
-  17  load (with mem 8 - reg 8)/
-  18  load (with reg 8 - num 8)/
-  19  load (with mem 8 - num 8)
-  20  load (with mem 8 - mem 8)
-  21  Input (only acc)
-  22  Output (only acc)
-  23  AND (with reg 8 bits) acc
-  24  AND (with mem 8 bits) acc
-  25  AND (with num 8 bits) acc
-  26  OR (with reg 8 bits) acc
-  27  OR (with mem bits) acc
-  28  OR (with num 8 bits) acc
-  29  XOR (with reg 8 bits) acc
-  30  XOR (with mem bits) acc
-  31  XOR (with num 8 bits) acc
-  32  comparation (with reg 8 bits) acc
-  33  comparation (with num 8 bits) acc
-  34  comparation (with mem 8 bits) acc
-  35  rigthRotation (with reg 8 bits)
-  36  rigthRotation (with reg 16 bits)
-  37  rigthRotation (with mem 8 bits)
-  38  leftRotation (with reg 8 bits)
-  39  leftRotation (with reg 16 bits)
-  40  leftRotation (with mem 8 bits)
-  41  checkBit (with reg 8 bits) modify z-flag
-  42  checkBit (with mem 8 bits) modify z-flag
-  43  setBit (with reg 8 bits)
-  44  setBit (with mem 8 bits)
-  45  resetBit (with reg 8 bits)
-  46  resetBit (with reg 16 bits)
-  47  jump pos (is a memory address)
-  48  jump zero (is a memory address)
-  -1 end
-  */
-
+0  add (with reg) accum
+1  add (with mem ind) accum
+2  add (with mem dir)
+3  add (with num 8 bits) accum
+4  sub (with reg) accum
+5  sub (with mem ind) accum
+6  sub (with mem dir)
+7  sub (with num 8 bits) accum
+8  increment1 (with reg 8 bits)
+9  increment1 (with reg 16 bits)
+10 increment1 (with mem ind 8 bits)
+11 increment1 (with mem dir 8 bits)
+12 decrement1 (with reg 8 bits)
+13 decrement1 (with reg 16 bits)
+14 decrement1 (with mem ind 8 bits)
+15 decrement1 (with mem dir 8 bits)
+16 complement1 (only acc)
+17 complement2 (only acc)
+18 load (with reg 8 - reg 8)
+19 load (with reg 8 - mem ind) A, (HL) ind
+20 load (with reg 8 - mem dir) A, (2016H) dir
+21 load (with reg 8 - num 8)
+22 load (with reg 16 - reg 16)
+23 load (with reg 16 - num )
+24 load (with reg 16 - 2 reg 8 )
+25 load (with 2 reg 8 - reg 16)
+26 load (with mem ind 8 - reg 8)
+27 load (with mem ind 8 - mem ind 8)
+28 load (with mem ind 8 - mem dir 8)
+29 load (with mem ind 8 - num 8)
+30 load (with mem dir 8 - reg 8)
+31 load (with mem dir 8 - mem ind 8)
+32 load (with mem dir 8 - mem dir 8)
+33 load (with mem dir 8 - num 8)
+34 Input (only acc)
+35 Output (only acc)
+36 AND (with reg 8 bits) acc
+37 AND (with mem ind  8 bits) acc
+38 AND (with mem dir  8 bits) acc
+39 AND (with num 8 bits) acc
+40 OR (with reg 8 bits) acc
+41 OR (with mem ind) acc
+42  OR (with mem dir) acc
+43  OR (with num 8 bits) acc
+44  XOR (with reg 8 bits) acc
+45  XOR (with mem ind bits) acc
+46  XOR (with mem dir bits) acc
+47  XOR (with num 8 bits) acc
+48  comparation (with reg 8 bits) acc
+49  comparation (with mem ind 8 bits) acc
+50  comparation (with mem dir 8 bits) acc
+51  comparation (with num 8 bits) acc
+52  rigthRotation (with reg 8 bits)
+53  rigthRotation (with reg 16 bits)
+54  rigthRotation (with mem ind 8 bits)
+55  rigthRotation (with mem dir 8 bits)
+56  leftRotation (with reg 8 bits)
+57  leftRotation (with reg 16 bits)
+58  leftRotation (with mem ind 8 bits)
+59  leftRotation (with mem dir 8 bits)
+60  checkBit (with reg 8 bits) modify z-flag
+61  checkBit (with mem ind 8 bits) modify z-flag
+62  checkBit (with mem dir 8 bits) modify z-flag
+63  setBit (with reg 8 bits)
+64  setBit (with mem ind 8 bits)
+65  setBit (with mem dir 8 bits)
+66  resetBit (with reg 8 bits)
+67  resetBit (with mem ind 8 bits)
+68  resetBit (with mem dir 8 bits)
+69  jump C, mem ind (acc > 0)  JP C,(2050H) JP C,ENDIF JP C,(HL)
+70  jump C, mem dir
+70  jump C, label
+71  jump Z, mem ind (acc == 0)
+72  jump Z, mem dir
+72  jump Z, label
+73  jump mem ind
+74  jump mem dir
+74  jump label
+75  halt
+76  end
+77  org
+78  equ
+79  call
+80  ret
+*/
 }

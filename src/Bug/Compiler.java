@@ -30,7 +30,7 @@ public class Compiler extends bugBaseVisitor<Type>{
   
   
   public Compiler() throws UnsupportedEncodingException, FileNotFoundException {
-    outFile = new PrintWriter("programs/p.assembler", "UTF-8");
+    outFile = new PrintWriter("programs/program.assembler", "UTF-8");
     program = new LinkedList();
   }
 
@@ -50,7 +50,7 @@ public class Compiler extends bugBaseVisitor<Type>{
 
   private void print(String instruction) {
     program.add(instruction);
-    System.out.println(instruction);
+//    System.out.println(instruction);
   }
 
   @Override
