@@ -6,21 +6,34 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 
 class UI {
-  private GUIJFrame f;
+ private GUIJFrame f;
+  public Processor z80;
 
    public UI(){
        this.f=new GUIJFrame();
    }
-    public void getProgram(String file) throws InterruptedException, IOException {
+    public void getProgram(String file, int ch, int spd) throws InterruptedException, IOException {
     //this.f=new GUIJFrame();
     f.setVisible(true);
-    Memory mem = new Memory();
-    Assembler a = new Assembler();
-    a.assemble(file);
-    LinkerLoader l = new LinkerLoader();
-    l.chargeProgram("relocatableCode.txt", mem);
-    Processor z80 = new Processor(mem, this);
-    z80.runProgram();
+    Memory mem = new Memory(this);
+    Assembler a = new Assembler();    
+    a.assemble(file);    
+    LinkerLoader l = new LinkerLoader();    
+    l.chargeProgram("relocatableCode.txt", mem);    
+    updateMem(mem); //print mem in ui
+    this.z80 = new Processor(mem, this, spd);
+    if(ch==0){z80.runProgram();}  
+  }
+  public void updateMem(Memory mem){      
+    String[] progmem = new String[mem.getSize()];
+      for (int i = 0; i < mem.getSize(); i++) {
+        //System.out.println("addr: " + i + "; MEM: " + mem.get(i) );
+        progmem[i]= i+" | "+ mem.get(i);  
+    }    
+    f.printprog(progmem);
+  }
+  public void runInstruction() throws IOException{
+      this.z80.runInstruction();
   }
   public void printLabel(String s){
       f.print(s);
@@ -43,7 +56,7 @@ class UI {
   public void printLabelFlag(int flag, boolean val){
       f.printflag(flag,val);
   }
-  public void printOutput(String msg){
-      f.printoutput(msg);
+  public void printOutput(String msg, int data){
+      f.printoutput(msg,data);
   }
 }

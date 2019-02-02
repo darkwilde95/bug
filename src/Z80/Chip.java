@@ -34,7 +34,7 @@ class Chip{
     }
     public void setDatabus(int data){
         String output =  String.format("%8s", Integer.toBinaryString(data)).replace(' ', '0'); 
-        this.ui.printOutput(output);
+        this.ui.printOutput(output, data);
         this.databus = data;
     }
 }

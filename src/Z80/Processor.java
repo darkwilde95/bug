@@ -35,8 +35,11 @@ public class Processor {
 
   //UI
   private UI ui;
+  
+  //Execution speed
+  private int SPD = 10;
 
-  public Processor(Memory mem, UI ui) {
+  public Processor(Memory mem, UI ui, int speed) {
     this.end = false;
     this.flags = new boolean[8];
     this.mem = mem;
@@ -51,6 +54,7 @@ public class Processor {
     }
     this.chip = new Chip(ui);
     this.ui = ui;
+    this.SPD = speed;
   }
 
   public void setReg_8bit(int reg, int val){
@@ -79,9 +83,14 @@ public class Processor {
     while(!this.end) {
       this.fetch();
       this.execute();
-      Thread.sleep(500);
+      Thread.sleep(SPD);
       i++;
     }
+  }
+  
+  public void runInstruction() throws IOException{      
+    this.fetch();
+    this.execute();
   }
 
   public void fetch() {
