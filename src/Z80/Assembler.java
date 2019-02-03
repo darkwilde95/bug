@@ -130,30 +130,36 @@ public class Assembler {
 
         case "ADD":
           //Reg
-          if (this.reg_8bit.containsKey(params[1])) {
-            this.ir.opcode = 0;
-            this.ir.op1 = this.reg_8bit.get("A");
-            this.ir.op2 = this.reg_8bit.get(params[1]);
-
-          //Mem
-          } else if (params[1].contains("(")) {
-            // direccion indirecto (XX)
-            if (params[1].length() == 4) {
-              this.ir.opcode = 1;
-              this.ir.op1 = this.reg_8bit.get(params[1].substring(1,2));
-              this.ir.op2 = this.reg_8bit.get(params[1].substring(2,3));
-
-            // direccion directo (xxxxH)
-            } else {
-              this.ir.opcode = 2;
-              this.ir.op2 = this.toDec(params[1].substring(1,5));
-            }
-
+          if (!params[0].equalsIgnoreCase("A")) {
+            this.ir.opcode = 82;
+            this.ir.op1 = this.reg_8bit.get(params[1].substring(0,1));
+            this.ir.op2 = this.reg_8bit.get(params[1].substring(1));
           } else {
-            //Num hex XXH
-            this.ir.opcode = 3;
-            this.ir.op1 = this.reg_8bit.get("A");
-            this.ir.op2 = this.toDec(params[1].substring(0, 2));
+            if (this.reg_8bit.containsKey(params[1])) {
+              this.ir.opcode = 0;
+              this.ir.op1 = this.reg_8bit.get("A");
+              this.ir.op2 = this.reg_8bit.get(params[1]);
+
+            //Mem
+            } else if (params[1].contains("(")) {
+              // direccion indirecto (XX)
+              if (params[1].length() == 4) {
+                this.ir.opcode = 1;
+                this.ir.op1 = this.reg_8bit.get(params[1].substring(1,2));
+                this.ir.op2 = this.reg_8bit.get(params[1].substring(2,3));
+
+              // direccion directo (xxxxH)
+              } else {
+                this.ir.opcode = 2;
+                this.ir.op2 = this.toDec(params[1].substring(1,5));
+              }
+
+            } else {
+              //Num hex XXH
+              this.ir.opcode = 3;
+              this.ir.op1 = this.reg_8bit.get("A");
+              this.ir.op2 = this.toDec(params[1].substring(0, 2));
+            }
           }
           break;
 
@@ -706,7 +712,7 @@ public class Assembler {
           // retorno desde una subrutina
           this.ir.opcode = 80;
           break;
-          
+
         case "NOP":
           this.ir.opcode = 81;
           break;

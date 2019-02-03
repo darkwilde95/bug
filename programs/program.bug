@@ -1,5 +1,7 @@
-i = 2
-while i <= 8
-  print i
-  i = i + 2
+for i = 1 to 10 step 1
+  b = 0
+  for j = 1 to 10 step 1
+    b = b + i
+    print b
+  end
 end

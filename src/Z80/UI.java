@@ -19,6 +19,7 @@ class UI {
    }
     public void getProgram(String file, int ch, int spd) throws InterruptedException, IOException {
     //this.f=new GUIJFrame();
+    Runtime.getRuntime().gc();
     f.setVisible(true);
     InputStream is = System.in;
     if ( file!=null ) is = new FileInputStream(file);
@@ -26,24 +27,32 @@ class UI {
     bugLexer lexer = new bugLexer(input);
     CommonTokenStream tokens = new CommonTokenStream(lexer);
     bugParser parser = new bugParser(tokens);
-    ParseTree tree = parser.program(); // parse
+    ParseTree tree = parser.program();
     Compiler eval = new Compiler();
-    eval.visit(tree);    
+    eval.visit(tree);
+    eval = null;
+    tree = null;
+    parser = null;
+    tokens = null;
+    lexer = null;
     Memory mem = new Memory(this);
-    Assembler a = new Assembler();    
-    a.assemble("programs/program.assembler");    
+    Assembler a = new Assembler();
+    a.assemble("programs/program.assembler");
+    a = null;
     LinkerLoader l = new LinkerLoader();
-    l.chargeProgram("programs/relocatableCode.txt", mem);    
+    l.chargeProgram("programs/relocatableCode.txt", mem);
+    l = null;
     updateMem(mem); //print mem in ui
+    Runtime.getRuntime().gc();
     this.z80 = new Processor(mem, this, spd);
-    if(ch==0){z80.runProgram();}  
+    if(ch==0){z80.runProgram();}
   }
-  public void updateMem(Memory mem){      
+  public void updateMem(Memory mem){
     String[] progmem = new String[mem.getSize()];
       for (int i = 0; i < mem.getSize(); i++) {
         //System.out.println("addr: " + i + "; MEM: " + mem.get(i) );
-        progmem[i]= i+" | "+ mem.get(i);  
-    }    
+        progmem[i]= i+" | "+ mem.get(i);
+    }
     f.printprog(progmem);
   }
   public void runInstruction() throws IOException{

@@ -17,10 +17,10 @@ public class bugLexer extends Lexer {
 	protected static final PredictionContextCache _sharedContextCache =
 		new PredictionContextCache();
 	public static final int
-		ASSIGN=1, PLUS=2, MINUS=3, MULT=4, DIV=5, COMMA=6, SBL=7, SBR=8, PL=9, 
-		PR=10, AND=11, OR=12, NOT=13, TRUE=14, FALSE=15, LT=16, GT=17, LE=18, 
-		GE=19, EQ=20, NEQ=21, IF=22, ELSE=23, ELIF=24, WHILE=25, END=26, FOR=27, 
-		STEP=28, TO=29, PRINT=30, ID=31, INT=32, FLOAT=33, COMMENT=34, NEWLINE=35, 
+		ASSIGN=1, PLUS=2, MINUS=3, MULT=4, DIV=5, COMMA=6, SBL=7, SBR=8, PL=9,
+		PR=10, AND=11, OR=12, NOT=13, TRUE=14, FALSE=15, LT=16, GT=17, LE=18,
+		GE=19, EQ=20, NEQ=21, IF=22, ELSE=23, ELIF=24, WHILE=25, END=26, FOR=27,
+		STEP=28, TO=29, PRINT=30, ID=31, INT=32, FLOAT=33, COMMENT=34, NEWLINE=35,
 		WS=36;
 	public static String[] channelNames = {
 		"DEFAULT_TOKEN_CHANNEL", "HIDDEN"
@@ -32,9 +32,9 @@ public class bugLexer extends Lexer {
 
 	private static String[] makeRuleNames() {
 		return new String[] {
-			"ASSIGN", "PLUS", "MINUS", "MULT", "DIV", "COMMA", "SBL", "SBR", "PL", 
-			"PR", "AND", "OR", "NOT", "TRUE", "FALSE", "LT", "GT", "LE", "GE", "EQ", 
-			"NEQ", "IF", "ELSE", "ELIF", "WHILE", "END", "FOR", "STEP", "TO", "PRINT", 
+			"ASSIGN", "PLUS", "MINUS", "MULT", "DIV", "COMMA", "SBL", "SBR", "PL",
+			"PR", "AND", "OR", "NOT", "TRUE", "FALSE", "LT", "GT", "LE", "GE", "EQ",
+			"NEQ", "IF", "ELSE", "ELIF", "WHILE", "END", "FOR", "STEP", "TO", "PRINT",
 			"ID", "INT", "FLOAT", "COMMENT", "NEWLINE", "WS"
 		};
 	}
@@ -42,18 +42,18 @@ public class bugLexer extends Lexer {
 
 	private static String[] makeLiteralNames() {
 		return new String[] {
-			null, "'='", "'+'", "'-'", "'*'", "'/'", "','", "'['", "']'", "'('", 
-			"')'", "'&&'", "'||'", "'!'", "'true'", "'false'", "'<'", "'>'", "'<='", 
-			"'>='", "'=='", "'!='", "'if'", "'else'", "'elif'", "'while '", "'end'", 
+			null, "'='", "'+'", "'-'", "'*'", "'/'", "','", "'['", "']'", "'('",
+			"')'", "'&&'", "'||'", "'!'", "'true'", "'false'", "'<'", "'>'", "'<='",
+			"'>='", "'=='", "'!='", "'if'", "'else'", "'elif'", "'while '", "'end'",
 			"'for'", "'step'", "'to'", "'print'"
 		};
 	}
 	private static final String[] _LITERAL_NAMES = makeLiteralNames();
 	private static String[] makeSymbolicNames() {
 		return new String[] {
-			null, "ASSIGN", "PLUS", "MINUS", "MULT", "DIV", "COMMA", "SBL", "SBR", 
-			"PL", "PR", "AND", "OR", "NOT", "TRUE", "FALSE", "LT", "GT", "LE", "GE", 
-			"EQ", "NEQ", "IF", "ELSE", "ELIF", "WHILE", "END", "FOR", "STEP", "TO", 
+			null, "ASSIGN", "PLUS", "MINUS", "MULT", "DIV", "COMMA", "SBL", "SBR",
+			"PL", "PR", "AND", "OR", "NOT", "TRUE", "FALSE", "LT", "GT", "LE", "GE",
+			"EQ", "NEQ", "IF", "ELSE", "ELIF", "WHILE", "END", "FOR", "STEP", "TO",
 			"PRINT", "ID", "INT", "FLOAT", "COMMENT", "NEWLINE", "WS"
 		};
 	}

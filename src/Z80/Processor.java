@@ -35,7 +35,7 @@ public class Processor {
 
   //UI
   private UI ui;
-  
+
   //Execution speed
   private int SPD = 10;
 
@@ -87,8 +87,8 @@ public class Processor {
       i++;
     }
   }
-  
-  public void runInstruction() throws IOException{      
+
+  public void runInstruction() throws IOException{
     this.fetch();
     this.execute();
   }
@@ -612,9 +612,20 @@ public class Processor {
         this.setReg_16bit(PC, this.reg_16bit[SP]);
         this.setReg_16bit(SP, 0);
         break;
-      
+
       // nop
       case 81:
+        break;
+
+      // add hl,xx
+      case 82:
+        aux = this.reg_8bit[H] << 8;
+        aux |= this.reg_8bit[L];
+        res = this.reg_8bit[this.ir.op1] << 8;
+        res |= this.reg_8bit[this.ir.op2];
+        aux = ALU.add(aux,res);
+        this.setReg_8bit(H,aux >> 8);
+        this.setReg_8bit(L,aux & 0x00_00_00_ff);
         break;
     }
   }

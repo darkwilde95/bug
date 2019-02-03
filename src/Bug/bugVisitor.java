@@ -29,11 +29,26 @@ public interface bugVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitStatement(bugParser.StatementContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link bugParser#expression}.
+	 * Visit a parse tree produced by the {@code exprA}
+	 * labeled alternative in {@link bugParser#expression}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitExpression(bugParser.ExpressionContext ctx);
+	T visitExprA(bugParser.ExprAContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code exprB}
+	 * labeled alternative in {@link bugParser#expression}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitExprB(bugParser.ExprBContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code exprArray}
+	 * labeled alternative in {@link bugParser#expression}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitExprArray(bugParser.ExprArrayContext ctx);
 	/**
 	 * Visit a parse tree produced by the {@code notExpr_b}
 	 * labeled alternative in {@link bugParser#expression_b}.
@@ -146,11 +161,47 @@ public interface bugVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitPrint(bugParser.PrintContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link bugParser#assignation}.
+	 * Visit a parse tree produced by the {@code exprAssign}
+	 * labeled alternative in {@link bugParser#assignation}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitAssignation(bugParser.AssignationContext ctx);
+	T visitExprAssign(bugParser.ExprAssignContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code atoaAssign}
+	 * labeled alternative in {@link bugParser#assignation}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitAtoaAssign(bugParser.AtoaAssignContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code atoIdAssign}
+	 * labeled alternative in {@link bugParser#assignation}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitAtoIdAssign(bugParser.AtoIdAssignContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code etoaAssign}
+	 * labeled alternative in {@link bugParser#assignation}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitEtoaAssign(bugParser.EtoaAssignContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code arrayType}
+	 * labeled alternative in {@link bugParser#array}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitArrayType(bugParser.ArrayTypeContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code arrayId}
+	 * labeled alternative in {@link bugParser#array}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitArrayId(bugParser.ArrayIdContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link bugParser#b_if}.
 	 * @param ctx the parse tree
